@@ -13,7 +13,7 @@ StateManager* StateManager_init() {
 }
 
 void StateManager_free(StateManager *sm) {
-    while(Stack_count(sm->stack) > 0) {
+    while(sm->top != NULL) {
         StateManager_pop(sm);
     }
     sm->stack = NULL;
@@ -40,11 +40,10 @@ void StateManager_push(StateManager *sm, State *s) {
 
 
 State* StateManager_pop(StateManager *sm) {
-    if (StateManager_count(sm) == 0) return NULL; 
+    if (StateManager_count(sm) == 0) { sm->top = NULL; return NULL; }
     State* s = Stack_pop(sm->stack);
-    // if(s && s->destory) s->destory();
+    if(s && s->destory) s->destory();
     sm->top = Stack_peek(sm->stack);
-    printf("cnt = %d, s.destory = %p\n", StateManager_count(sm), s->destory);
     return s;
 }
 

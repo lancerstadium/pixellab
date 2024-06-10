@@ -17,7 +17,7 @@
 #define ANSI_FG_MAGENTA     "\x1b[35m"
 #define ANSI_FG_CYAN        "\x1b[36m"
 #define ANSI_FG_WHITE       "\x1b[37m"
-#define ANSI_FG_DEFAULT     "\x1b[39m"
+#define ANSI_FG_GREY        "\x1b[90m"
 
 #define ANSI_BG_BLACK       "\x1b[40m"
 #define ANSI_BG_RED         "\x1b[41m"
@@ -27,7 +27,7 @@
 #define ANSI_BG_MAGENTA     "\x1b[45m"
 #define ANSI_BG_CYAN        "\x1b[46m"
 #define ANSI_BG_WHITE       "\x1b[47m"
-#define ANSI_BG_DEFAULT     "\x1b[49m"
+#define ANSI_BG_GREY        "\x1b[100m"
 
 
 // Add Multiple ANSI FMT
@@ -40,6 +40,8 @@
 #define _MAGENTA(str) ANSI_FMT(str, ANSI_FG_MAGENTA)
 #define _CYAN(str) ANSI_FMT(str, ANSI_FG_CYAN)
 #define _WHITE(str) ANSI_FMT(str, ANSI_FG_WHITE)
+#define _GREY(str) ANSI_FMT(str, ANSI_FG_GREY)
+#define _DEFAULT(str) ANSI_FMT(str, ANSI_FG_DEFAULT)
 
 
 #define _BOLD(str) ANSI_FMT(str, ANSI_BOLD)
@@ -54,6 +56,7 @@
 #define _MAGENTA_BOLD(str) ANSI_FMT(str, ANSI_FG_MAGENTA ANSI_BOLD)
 #define _CYAN_BOLD(str) ANSI_FMT(str, ANSI_FG_CYAN ANSI_BOLD)
 #define _WHITE_BOLD(str) ANSI_FMT(str, ANSI_FG_WHITE ANSI_BOLD)
+#define _GREY_BOLD(str) ANSI_FMT(str, ANSI_FG_GREY ANSI_BOLD)
 
 #define _RED_ULINE(str) ANSI_FMT(str, ANSI_FG_RED ANSI_UNDERLINE)
 #define _GREEN_ULINE(str) ANSI_FMT(str, ANSI_FG_GREEN ANSI_UNDERLINE)
@@ -62,5 +65,6 @@
 #define _MAGENTA_ULINE(str) ANSI_FMT(str, ANSI_FG_MAGENTA ANSI_UNDERLINE)
 #define _CYAN_ULINE(str) ANSI_FMT(str, ANSI_FG_CYAN ANSI_UNDERLINE)
 #define _WHITE_ULINE(str) ANSI_FMT(str, ANSI_FG_WHITE ANSI_UNDERLINE)
+#define _GREY_ULINE(str) ANSI_FMT(str, ANSI_FG_GREY ANSI_UNDERLINE)
 
 #endif

@@ -9,6 +9,8 @@
 
 // 1e3: us, 1e6: ms, 1e9: s
 #define MU_TIMESCALE 1e6
+// 1: Open assert message, 0: No assert message
+#define MU_ASTMSG 0
 
 #define mu_suite_start() char *message = NULL
 
@@ -21,15 +23,43 @@
     time_taken = ((end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / scale); \
     time_total_taken += time_taken; \
 
-#define mu_assert(test, message) if (!(test)) { mu_msg("assert fail: " _RED("%-25s"), #test); log_err(message); return message; }
+
 #define mu_cnt_res(res) ((res == NULL) ? (tests_pass++) : (tests_fail++))
 #define mu_run_res(res) ((res == NULL) ? _GREEN("PASS") : _RED("FAIL"))
 #define mu_msg(...) \
     do {\
         char message[64]; \
         snprintf(message, 64, ARG_FIRST(__VA_ARGS__) ARG_OTHER(__VA_ARGS__)); \
-        printf("│  │ " _YELLOW("msg: ") "%-38s │\n", message); \
+        printf("│  │ " _YELLOW("msg: ") _GREY("%-38s") " │\n", message); \
     } while(0)
+
+
+#if MU_ASTMSG == 0
+
+#define mu_ast(test, message) \
+    do {\
+        if (!(test)) {\
+            printf("│  │ " _YELLOW("ast: ") _GREY("%-25s ") _RED("%-12s") " │\n", message, #test); \
+            log_err(message); \
+            return message; \
+        } \
+    } while(0)
+#else
+
+#define mu_ast(test, message) \
+    do {\
+        if (!(test)) {\
+            printf("│  │ " _YELLOW("ast: ") _GREY("%-25s ") _RED("%-12s") " │\n", message, #test); \
+            log_err(message); \
+            return message; \
+        } \
+        else {\
+            printf("│  │ " _YELLOW("ast: ") _GREEN("%-38s") " │\n", #test); \
+        } \
+    } while(0)
+
+#endif
+
 
 #define mu_run_test(test) \
     debug("\n──────%s", " Sub: " _BLUE(#test)); \
@@ -43,13 +73,20 @@
     if (message) return message;
 
 #define RUN_TESTS(name) \
-    int main(int, char *argv[]) {\
+int main(int, char *argv[]) {\
     debug("\n\n────── Run: " _BLUE("%s"), argv[0]);\
     printf("┌────────────────────────────────────────────────┐\n");\
     printf("│ Test: " _BLUE("%-40s") " │\n", argv[0]);\
     char *result = name();\
     printf("│ Sum: " _MAGENTA("%-2d ") "[%2d " _GREEN("PASS") " %2d " _RED("FAIL") "] " _CYAN("%12.4f %2s") " %s │\n", tests_run, tests_pass, tests_fail, time_total_taken, time_scale, mu_run_res(result));\
     printf("├────────────────────────────────────────────────┤\n");\
+    if (result == NULL) { \
+        printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "Res" , argv[0], _GREEN("PASS")); \
+    } else { \
+        printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "-" , argv[0], _RED("FAIL")); \
+        printf("│ %-3s %-42s │\n", _CYAN("Log"), _YELLOW("tests/tests.log")); \
+    } \
+    printf("└────────────────────────────────────────────────┘\n"); \
     exit(result != 0);\
 }
 

@@ -12,14 +12,14 @@ char *tests[] = {"test1 data", "test2 data", "test3 data"};
 char *test_create()
 {
     queue = Queue_create();
-    mu_assert(queue != NULL, "Failed to create queue.");
+    mu_ast(queue != NULL, "Failed to create queue.");
 
     return NULL;
 }
 
 char *test_destroy()
 {
-    mu_assert(queue != NULL, "Failed to make queue #2");
+    mu_ast(queue != NULL, "Failed to make queue #2");
     Queue_destroy(queue);
 
     return NULL;
@@ -30,10 +30,10 @@ char *test_send_recv()
     int i = 0;
     for(i = 0; i < NUM_TESTS; i++) {
         Queue_send(queue, tests[i]);
-        mu_assert(Queue_peek(queue) == tests[0], "Wrong next value.");
+        mu_ast(Queue_peek(queue) == tests[0], "Wrong next value.");
     }
 
-    mu_assert(Queue_count(queue) == NUM_TESTS, "Wrong count on send.");
+    mu_ast(Queue_count(queue) == NUM_TESTS, "Wrong count on send.");
 
     QUEUE_FOREACH(queue, cur) {
         debug("VAL: %s", (char *)cur->value);
@@ -41,10 +41,10 @@ char *test_send_recv()
 
     for(i = 0; i < NUM_TESTS; i++) {
         char *val = Queue_recv(queue);
-        mu_assert(val == tests[i], "Wrong value on recv.");
+        mu_ast(val == tests[i], "Wrong value on recv.");
     }
 
-    mu_assert(Queue_count(queue) == 0, "Wrong count after recv.");
+    mu_ast(Queue_count(queue) == 0, "Wrong count after recv.");
 
     return NULL;
 }

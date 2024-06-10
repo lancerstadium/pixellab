@@ -19,6 +19,9 @@ endif
 
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
+
+CFG_REPORT=0
+
 # The Target Build
 all: $(TARGET) tests
 
@@ -41,17 +44,24 @@ build:
 .PHONY: tests
 tests: LDLIBS += $(TARGET)
 tests: $(TESTS)
+ifeq ($(CFG_REPORT),1)
+	@echo "tests report: ./tests/tests.report"
+	@sh ./tests/runtests.sh | sed 's/\x1B\[[0-9;]*[JKmsu]//g' > tests/tests.report
+else
 	@sh ./tests/runtests.sh
+endif
 
 valgrind:
 	@echo "valgrind log: ./tests/valgrind.log"
 	VALGRIND="valgrind --log-file=./tests/valgrind.log" $(MAKE)
-	
+
+log:
+	@tail -n $$(($$(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$$/d'
 
 # The Cleaner
 clean:
 	rm -rf build $(OBJECTS) $(TESTS)
-	rm -f tests/tests.log
+	rm -f tests/tests.log tests/valgrind.log
 	find . -name "*.gc*" -exec rm {} \;
 	rm -rf `find . -name "*.dSYM" -print`
 
@@ -59,6 +69,11 @@ clean:
 install: all
 	install -d $(DESTDIR)/$(PREFIX)/lib/
 	install $(TARGET) $(DESTDIR)/$(PREFIX)/lib/
+
+commit:
+	git add .
+	git commit -m "$(shell date)"
+	git push
 
 # The Checker
 # 这个正则表达式是用来匹配可能存在安全风险的函数，

@@ -6,7 +6,7 @@ StateManager *sm;
 
 char* test_init() {
     sm = StateManager_init();
-    mu_assert(sm != NULL, "Failed to init state manager.");
+    mu_ast(sm != NULL, "Failed to init state manager.");
     return NULL;
 }
 
@@ -14,7 +14,7 @@ char* test_init() {
 char* test_scale() {
     int cap = sm->capcity;
     StateManager_scale(sm);
-    mu_assert(sm->capcity == cap * 2, "Failed to scale state manager.");
+    mu_ast(sm->capcity == cap * 2, "Failed to scale state manager.");
     return NULL;
 }
 
@@ -65,22 +65,26 @@ char* test_push_pop() {
     mu_msg("ss.destory = %p", sm->top->destory);
 
     State* ss = StateManager_pop(sm);
-    StateManager_update(sm, 10.0f);
+    StateManager_update(sm, 11.0f);
 
-    mu_assert(sm->top == &s1, "Wrong top after pop.");
-    mu_assert(ss == &s2, "Wrong state after pop.");
-    mu_assert(ss->update == sm->top->update, "Wrong update fn after pop.");
+    mu_ast(sm->top == &s1, "Wrong top after pop.");
+    mu_ast(ss == &s2, "Wrong state after pop.");
+    mu_ast(ss->update == sm->top->update, "Wrong update fn after pop.");
+    mu_ast(StateManager_count(sm) == 1, "Wrong count after pop.");
+
+    ss = StateManager_pop(sm);
+    StateManager_update(sm, 12.0f);
+    mu_ast(sm->top == NULL, "Wrong top after pop.");
+    mu_ast(StateManager_count(sm) == 0, "Wrong count after pop.");
     
     return NULL;
 }
 
 
 char* test_free() {
-    mu_msg("ss.destory = %p", sm->top->destory);
-    // State* ss = StateManager_pop(sm);
-    // mu_msg("ss.destory = %p", ss->destory);
+    
     StateManager_free(sm);
-    mu_assert(sm->stack == NULL, "Failed to free state manager.");
+    mu_ast(sm->stack == NULL, "Failed to free state manager.");
     return NULL;
 }
 

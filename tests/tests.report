@@ -1,0 +1,66 @@
+
+Running Unit Tests:
+┌────────────────────────────────────────────────┐
+│ Test: ./tests/list_algos_tests                 │
+│  ├── 1  test_bubble_sort        0.0025 ms PASS │
+│  ├── 2  test_merge_sort         0.0027 ms PASS │
+│ Sum: 2  [ 2 PASS  0 FAIL]       0.0052 ms PASS │
+├────────────────────────────────────────────────┤
+│ Res ./tests/list_algos_tests              PASS │
+└────────────────────────────────────────────────┘
+[Test 1 Passed]
+┌────────────────────────────────────────────────┐
+│ Test: ./tests/list_tests                       │
+│  ├── 1  test_create             0.0002 ms PASS │
+│  ├── 2  test_push_pop           0.0007 ms PASS │
+│  ├── 3  test_unshift            0.0003 ms PASS │
+│  ├── 4  test_remove             0.0001 ms PASS │
+│  ├── 5  test_shift              0.0001 ms PASS │
+│  ├── 6  test_destroy            0.0001 ms PASS │
+│ Sum: 6  [ 6 PASS  0 FAIL]       0.0015 ms PASS │
+├────────────────────────────────────────────────┤
+│ Res ./tests/list_tests                    PASS │
+└────────────────────────────────────────────────┘
+[Test 2 Passed]
+┌────────────────────────────────────────────────┐
+│ Test: ./tests/queue_tests                      │
+│  ├── 1  test_create             0.0002 ms PASS │
+│  ├── 2  test_send_recv          0.0032 ms PASS │
+│  ├── 3  test_destroy            0.0001 ms PASS │
+│ Sum: 3  [ 3 PASS  0 FAIL]       0.0035 ms PASS │
+├────────────────────────────────────────────────┤
+│ Res ./tests/queue_tests                   PASS │
+└────────────────────────────────────────────────┘
+[Test 3 Passed]
+┌────────────────────────────────────────────────┐
+│ Test: ./tests/stack_tests                      │
+│  ├── 1  test_create             0.0003 ms PASS │
+│  ├── 2  test_push_pop           0.0004 ms PASS │
+│  ├── 3  test_destroy            0.0001 ms PASS │
+│ Sum: 3  [ 3 PASS  0 FAIL]       0.0008 ms PASS │
+├────────────────────────────────────────────────┤
+│ Res ./tests/stack_tests                   PASS │
+└────────────────────────────────────────────────┘
+[Test 4 Passed]
+┌────────────────────────────────────────────────┐
+│ Test: ./tests/state_tests                      │
+│  ├── 1  test_init               0.0003 ms PASS │
+│  ├── 2  test_scale              0.0001 ms PASS │
+│  │ msg: state 1 created                        │
+│  │ msg: state 1/2 update 10.000000             │
+│  │ msg: ss.destory = 0x55a5f5635520            │
+│  │ msg: state 1 destroyed                      │
+│  │ msg: state 2 created                        │
+│  │ msg: state 1/2 update 10.000000             │
+│  │ msg: ss.destory = 0x55a5f56355e0            │
+│  │ msg: state 2 destroyed                      │
+│  │ msg: state 1/2 update 11.000000             │
+│  │ msg: state 1 destroyed                      │
+│  ├── 3  test_push_pop           0.0031 ms PASS │
+│  ├── 4  test_free               0.0001 ms PASS │
+│ Sum: 4  [ 4 PASS  0 FAIL]       0.0037 ms PASS │
+├────────────────────────────────────────────────┤
+│ Res ./tests/state_tests                   PASS │
+└────────────────────────────────────────────────┘
+[Test 5 Passed]
+
