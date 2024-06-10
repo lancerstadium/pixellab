@@ -1,0 +1,72 @@
+[36m[DEBU][0m (tests/list_algos_tests.c:91): 
+
+────── Run: [34m./tests/list_algos_tests[0m
+[36m[DEBU][0m (tests/list_algos_tests.c:85): 
+────── Sub: [34mtest_bubble_sort[0m
+[36m[DEBU][0m (tests/list_algos_tests.c:85): total exec 0.001 ms
+[36m[DEBU][0m (tests/list_algos_tests.c:86): 
+────── Sub: [34mtest_merge_sort[0m
+[36m[DEBU][0m (tests/list_algos_tests.c:86): total exec 0.004 ms
+[36m[DEBU][0m (tests/list_tests.c:113): 
+
+────── Run: [34m./tests/list_tests[0m
+[36m[DEBU][0m (tests/list_tests.c:103): 
+────── Sub: [34mtest_create[0m
+[36m[DEBU][0m (tests/list_tests.c:103): total exec 0.000 ms
+[36m[DEBU][0m (tests/list_tests.c:104): 
+────── Sub: [34mtest_push_pop[0m
+[36m[DEBU][0m (tests/list_tests.c:104): total exec 0.001 ms
+[36m[DEBU][0m (tests/list_tests.c:105): 
+────── Sub: [34mtest_unshift[0m
+[36m[DEBU][0m (tests/list_tests.c:105): total exec 0.000 ms
+[36m[DEBU][0m (tests/list_tests.c:106): 
+────── Sub: [34mtest_remove[0m
+[36m[DEBU][0m (tests/list_tests.c:106): total exec 0.000 ms
+[36m[DEBU][0m (tests/list_tests.c:107): 
+────── Sub: [34mtest_shift[0m
+[36m[DEBU][0m (tests/list_tests.c:107): total exec 0.000 ms
+[36m[DEBU][0m (tests/list_tests.c:108): 
+────── Sub: [34mtest_destroy[0m
+[36m[DEBU][0m (tests/list_tests.c:108): total exec 0.000 ms
+[36m[DEBU][0m (tests/queue_tests.c:62): 
+
+────── Run: [34m./tests/queue_tests[0m
+[36m[DEBU][0m (tests/queue_tests.c:55): 
+────── Sub: [34mtest_create[0m
+[36m[DEBU][0m (tests/queue_tests.c:55): total exec 0.000 ms
+[36m[DEBU][0m (tests/queue_tests.c:56): 
+────── Sub: [34mtest_send_recv[0m
+[36m[DEBU][0m (tests/queue_tests.c:39): VAL: test1 data
+[36m[DEBU][0m (tests/queue_tests.c:39): VAL: test2 data
+[36m[DEBU][0m (tests/queue_tests.c:39): VAL: test3 data
+[36m[DEBU][0m (tests/queue_tests.c:56): total exec 0.023 ms
+[36m[DEBU][0m (tests/queue_tests.c:57): 
+────── Sub: [34mtest_destroy[0m
+[36m[DEBU][0m (tests/queue_tests.c:57): total exec 0.000 ms
+[36m[DEBU][0m (tests/stack_tests.c:60): 
+
+────── Run: [34m./tests/stack_tests[0m
+[36m[DEBU][0m (tests/stack_tests.c:53): 
+────── Sub: [34mtest_create[0m
+[36m[DEBU][0m (tests/stack_tests.c:53): total exec 0.000 ms
+[36m[DEBU][0m (tests/stack_tests.c:54): 
+────── Sub: [34mtest_push_pop[0m
+[36m[DEBU][0m (tests/stack_tests.c:54): total exec 0.001 ms
+[36m[DEBU][0m (tests/stack_tests.c:55): 
+────── Sub: [34mtest_destroy[0m
+[36m[DEBU][0m (tests/stack_tests.c:55): total exec 0.000 ms
+[36m[DEBU][0m (tests/state_tests.c:100): 
+
+────── Run: [34m./tests/state_tests[0m
+[36m[DEBU][0m (tests/state_tests.c:92): 
+────── Sub: [34mtest_init[0m
+[36m[DEBU][0m (tests/state_tests.c:92): total exec 0.001 ms
+[36m[DEBU][0m (tests/state_tests.c:93): 
+────── Sub: [34mtest_scale[0m
+[36m[DEBU][0m (tests/state_tests.c:93): total exec 0.000 ms
+[36m[DEBU][0m (tests/state_tests.c:94): 
+────── Sub: [34mtest_push_pop[0m
+[36m[DEBU][0m (tests/state_tests.c:94): total exec 0.103 ms
+[36m[DEBU][0m (tests/state_tests.c:95): 
+────── Sub: [34mtest_free[0m
+[36m[DEBU][0m (tests/state_tests.c:95): total exec 0.025 ms
