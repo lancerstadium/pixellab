@@ -5,7 +5,7 @@
 StateManager *sm;
 
 char* test_init() {
-    sm = StateManager_init();
+    sm = StateManager_create();
     mu_ast(sm != NULL, "Failed to init state manager.");
     return NULL;
 }

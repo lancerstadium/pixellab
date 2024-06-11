@@ -1,6 +1,10 @@
+# FIRST_GOAL := $(firstword $(MAKECMDGOALS))
+# SECOND_GOAL := $(word 2, $(MAKECMDGOALS))
+# THIRD_GOAL := $(word 3, $(MAKECMDGOALS))
+
 ITEMNAME:=pixellab
-INCDIRS=src/ 
-INCFLAGS=$(addprefix -I,$(INCDIRS))
+INCPATH=src/
+INCFLAGS=$(addprefix -I,$(INCPATH)) $(shell sdl2-config --cflags)
 CFLAGS=-g -O2 -Wall -Wextra $(INCFLAGS) -rdynamic -DCONFIG_NO_DEBUG $(OPTFLAGS)
 LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
@@ -14,13 +18,14 @@ TESTS=$(patsubst %.c,%,$(TEST_SRC))
 TARGET=build/lib$(ITEMNAME).a
 OS=$(shell lsb_release -si)
 ifeq ($(OS),Ubuntu)
-	LDLIBS=-l$(ITEMNAME) -L./build -lm
+	LDLIBS=-l$(ITEMNAME) -L./build -lm -L/usr/lib/x86_64-linux-gnu/ $(shell sdl2-config --libs) -lSDL2_image -lSDL2_ttf
 endif
 
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
-
+# Config
 CFG_REPORT=0
+CFG_TEST=
 
 # The Target Build
 all: $(TARGET) tests
@@ -46,10 +51,13 @@ tests: LDLIBS += $(TARGET)
 tests: $(TESTS)
 ifeq ($(CFG_REPORT),1)
 	@echo "tests report: ./tests/tests.report"
-	@sh ./tests/runtests.sh | sed 's/\x1B\[[0-9;]*[JKmsu]//g' > tests/tests.report
+	@sh ./tests/runtests.sh $(CFG_TEST) | sed 's/\x1B\[[0-9;]*[JKmsu]//g' > tests/tests.report
 else
-	@sh ./tests/runtests.sh
+	@sh ./tests/runtests.sh $(CFG_TEST)
 endif
+
+test:
+	@$(VALGRIND) ./tests/$(SECOND_GOAL)_tests 2>> tests/tests.log
 
 valgrind:
 	@echo "valgrind log: ./tests/valgrind.log"

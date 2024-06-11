@@ -23,7 +23,8 @@ typedef struct {
 } StateManager;
 
 
-StateManager* StateManager_init();
+StateManager* StateManager_create();
+int StateManager_init(StateManager *sm);
 void StateManager_free(StateManager *sm);
 void StateManager_scale(StateManager *sm);
 int StateManager_count(StateManager *sm);

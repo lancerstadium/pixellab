@@ -9,21 +9,44 @@ ANSI_CYAN="\e[36m"
 test_count=1
 
 printf "\n${ANSI_BOLDU}Running Unit Tests:${ANSI_RESET}\n"
-for i in tests/*_tests
-do
-    if test -f $i
-    then
-        if $VALGRIND ./$i 2>> tests/tests.log
+if [ -z "$1" ]; then
+    for i in tests/*_tests
+    do
+        if test -f $i
         then
-            printf "${ANSI_GREEN}[Test ${test_count} Passed]${ANSI_RESET}\n"
+            if $VALGRIND ./$i 2>> tests/tests.log
+            then
+                printf "${ANSI_GREEN}[Test ${test_count} Passed]${ANSI_RESET}\n"
+            else
+                printf "${ANSI_RED}[Test ${test_count} Failed]${ANSI_RESET}\n"
+                printf "${ANSI_CYAN}[Log]:${ANSI_RESET}\n"
+                tail -n $(($(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$/d'
+                exit 1
+            fi
+        fi
+        test_count=$((test_count+1))
+    done
+else
+    for test_name in "$@"
+    do
+        test_to_run="tests/${test_name}_tests"
+        if test -f $test_to_run
+        then
+            if $VALGRIND ./$test_to_run 2>> tests/tests.log
+            then
+                printf "${ANSI_GREEN}[Test ${test_count} Passed]${ANSI_RESET}\n"
+            else
+                printf "${ANSI_RED}[Test ${test_count} Failed]${ANSI_RESET}\n"
+                printf "${ANSI_CYAN}[Log]:${ANSI_RESET}\n"
+                tail -n $(($(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$/d'
+                exit 1
+            fi
         else
-            printf "${ANSI_RED}[Test ${test_count} Failed]${ANSI_RESET}\n"
-            printf "${ANSI_CYAN}[Log]:${ANSI_RESET}\n"
-            tail -n $(($(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$/d'
+            printf "${ANSI_RED}[Test ${test_name}_tests not found]${ANSI_RESET}\n"
             exit 1
         fi
-    fi
-    test_count=$((test_count+1))
-done
+        test_count=$((test_count+1))
+    done
+fi
 
 echo ""

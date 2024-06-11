@@ -4,6 +4,9 @@
 #define ARG_FIRST(first, ...) first
 #define ARG_OTHER(first, ...) , ## __VA_ARGS__
 
+#define TRUE 1
+#define FALSE 0
+
 #define ANSI_RESET          "\x1b[0m"
 #define ANSI_BOLD           "\x1b[1m"
 #define ANSI_UNDERLINE      "\x1b[4m"

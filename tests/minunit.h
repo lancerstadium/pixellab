@@ -20,8 +20,11 @@
 #define mu_time_end(scale) \
     clock_gettime(CLOCK_MONOTONIC, &end_time); \
     time_scale = (scale == 1e3) ? "us" : (scale == 1e6) ? "ms" : "s"; \
-    time_taken = ((end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / scale); \
-    time_total_taken += time_taken; \
+    time_taken = ((end_time.tv_sec - start_time.tv_sec) * 1e9 + end_time.tv_nsec - start_time.tv_nsec) / scale; \
+    if (end_time.tv_nsec < start_time.tv_nsec) { \
+        time_taken += 1; \
+    } \
+    time_total_taken += time_taken;
 
 
 #define mu_cnt_res(res) ((res == NULL) ? (tests_pass++) : (tests_fail++))
@@ -39,7 +42,8 @@
 #define mu_ast(test, message) \
     do {\
         if (!(test)) {\
-            printf("│  │ " _YELLOW("ast: ") _GREY("%-25s ") _RED("%-12s") " │\n", message, #test); \
+            printf("│  │ " _YELLOW("ast: ") _RED("%-38s") " │\n", #test); \
+            mu_msg(message); \
             log_err(message); \
             return message; \
         } \
@@ -83,8 +87,9 @@ int main(int, char *argv[]) {\
     if (result == NULL) { \
         printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "Res" , argv[0], _GREEN("PASS")); \
     } else { \
-        printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "-" , argv[0], _RED("FAIL")); \
-        printf("│ %-3s %-42s │\n", _CYAN("Log"), _YELLOW("tests/tests.log")); \
+        printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "Res" , argv[0], _RED("FAIL")); \
+        printf("│ " _CYAN("%-3s ") _RED("%-42s") " │\n", "Msg" , result); \
+        printf("│ %-3s %-51s │\n", _CYAN("Log"), _YELLOW("tests/tests.log")); \
     } \
     printf("└────────────────────────────────────────────────┘\n"); \
     exit(result != 0);\

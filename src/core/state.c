@@ -1,15 +1,20 @@
 #include <core/state.h>
 
+static int statemanager_capcity = 10;
 
-static int sm_capcity = 10;
 
+StateManager* StateManager_create() {
+    StateManager* sm;
+    sm = (StateManager*)malloc(sizeof(StateManager));
+    StateManager_init(sm);
+    return sm;
+}
 
-StateManager* StateManager_init() {
-    StateManager* sm = (StateManager*)malloc(sizeof(StateManager));
-    sm->capcity = sm_capcity;
+int StateManager_init(StateManager *sm) {
+    sm->capcity = statemanager_capcity;
     sm->stack = Stack_create();
     sm->top = NULL;
-    return sm;
+    return 0;
 }
 
 void StateManager_free(StateManager *sm) {
@@ -50,16 +55,16 @@ State* StateManager_pop(StateManager *sm) {
 
 int StateManager_update(StateManager *sm, float delta_time) {
     if(sm->top) {
-        sm->top->update(delta_time);
-        return 1;
+        if(sm->top->update) sm->top->update(delta_time);
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 int StateManager_draw(StateManager *sm, float delta_time) {
     if(sm->top) {
         sm->top->draw(delta_time);
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
