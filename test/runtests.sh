@@ -10,17 +10,17 @@ test_count=1
 
 printf "\n${ANSI_BOLDU}Running Unit Tests:${ANSI_RESET}\n"
 if [ -z "$1" ]; then
-    for i in tests/*_tests
+    for i in test/*_tests
     do
         if test -f $i
         then
-            if $VALGRIND ./$i 2>> tests/tests.log
+            if $VALGRIND ./$i 2>> test/tests.log
             then
                 printf "${ANSI_GREEN}[Test ${test_count} Passed]${ANSI_RESET}\n"
             else
                 printf "${ANSI_RED}[Test ${test_count} Failed]${ANSI_RESET}\n"
                 printf "${ANSI_CYAN}[Log]:${ANSI_RESET}\n"
-                tail -n $(($(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$/d'
+                tail -n $(($(tac test/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) test/tests.log | sed '/^$/d'
                 exit 1
             fi
         fi
@@ -29,7 +29,7 @@ if [ -z "$1" ]; then
 else
     for test_name in "$@"
     do
-        test_to_run="tests/${test_name}_tests"
+        test_to_run="test/${test_name}_tests"
         if test -f $test_to_run
         then
             if $VALGRIND ./$test_to_run 2>> tests/tests.log
@@ -38,7 +38,7 @@ else
             else
                 printf "${ANSI_RED}[Test ${test_count} Failed]${ANSI_RESET}\n"
                 printf "${ANSI_CYAN}[Log]:${ANSI_RESET}\n"
-                tail -n $(($(tac tests/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) tests/tests.log | sed '/^$/d'
+                tail -n $(($(tac test/tests.log | grep -m 1 -n '^────── Run' | cut -d: -f1) + 1)) test/tests.log | sed '/^$/d'
                 exit 1
             fi
         else
