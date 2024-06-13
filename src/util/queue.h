@@ -1,7 +1,7 @@
-#ifndef _Utils_Queue_h_
-#define _Utils_Queue_h_
+#ifndef _Util_Queue_h_
+#define _Util_Queue_h_
 
-#include <utils/list.h>
+#include <util/list.h>
 
 typedef List Queue;
 

@@ -2,7 +2,7 @@
 #ifndef _Core_State_h_
 #define _Core_State_h_
 
-#include <utils/stack.h>
+#include <util/stack.h>
 
 typedef unsigned int (*fnPtr)();
 typedef unsigned int (*fnPtrFl)(float);

@@ -1,6 +1,6 @@
-#include "minunit.h"
-#include <utils/list.h>
-#include <utils/list_algos.h>
+#include <util/sob.h>
+#include <util/list.h>
+#include <util/list_algos.h>
 #include <assert.h>
 #include <string.h>
 
@@ -39,21 +39,21 @@ char *test_bubble_sort()
 
     // should work on a list that needs sorting
     int rc = List_bubble_sort(words, (List_compare)strcmp);
-    mu_ast(rc == 0, "Bubble sort failed.");
-    mu_ast(is_sorted(words), "Words are not sorted after bubble sort.");
+    ut_ast(rc == 0, "Bubble sort failed.");
+    ut_ast(is_sorted(words), "Words are not sorted after bubble sort.");
 
     // should work on an already sorted list
     rc = List_bubble_sort(words, (List_compare)strcmp);
-    mu_ast(rc == 0, "Bubble sort of already sorted failed.");
-    mu_ast(is_sorted(words), "Words should be sort if already bubble sorted.");
+    ut_ast(rc == 0, "Bubble sort of already sorted failed.");
+    ut_ast(is_sorted(words), "Words should be sort if already bubble sorted.");
 
     List_destroy(words);
 
     // should work on an empty list
     words = List_create(words);
     rc = List_bubble_sort(words, (List_compare)strcmp);
-    mu_ast(rc == 0, "Bubble sort failed on empty list.");
-    mu_ast(is_sorted(words), "Words should be sorted if empty.");
+    ut_ast(rc == 0, "Bubble sort failed on empty list.");
+    ut_ast(is_sorted(words), "Words should be sorted if empty.");
 
     List_destroy(words);
 
@@ -66,10 +66,10 @@ char *test_merge_sort()
 
     // should work on a list that needs sorting
     List *res = List_merge_sort(words, (List_compare)strcmp);
-    mu_ast(is_sorted(res), "Words are not sorted after merge sort.");
+    ut_ast(is_sorted(res), "Words are not sorted after merge sort.");
 
     List *res2 = List_merge_sort(res, (List_compare)strcmp);
-    mu_ast(is_sorted(res), "Should still be sorted after merge sort.");
+    ut_ast(is_sorted(res), "Should still be sorted after merge sort.");
     List_destroy(res2);
     List_destroy(res);
 
@@ -80,12 +80,12 @@ char *test_merge_sort()
 
 char *all_tests()
 {
-    mu_suite_start();
+    
 
-    mu_run_test(test_bubble_sort);
-    mu_run_test(test_merge_sort);
+    ut_add(test_bubble_sort);
+    ut_add(test_merge_sort);
 
     return NULL;
 }
 
-RUN_TESTS(all_tests);
+ut_run(all_tests);

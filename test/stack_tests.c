@@ -1,5 +1,5 @@
-#include "minunit.h"
-#include <utils/stack.h>
+#include <util/sob.h>
+#include <util/stack.h>
 #include <assert.h>
 
 static Stack *stack = NULL;
@@ -10,14 +10,14 @@ char *tests[] = {"test1 data", "test2 data", "test3 data"};
 char *test_create()
 {
     stack = Stack_create();
-    mu_ast(stack != NULL, "Failed to create stack.");
+    ut_ast(stack != NULL, "Failed to create stack.");
 
     return NULL;
 }
 
 char *test_destroy()
 {
-    mu_ast(stack != NULL, "Failed to make stack #2");
+    ut_ast(stack != NULL, "Failed to make stack #2");
     Stack_destroy(stack);
 
     return NULL;
@@ -28,10 +28,10 @@ char *test_push_pop()
     int i = 0;
     for(i = 0; i < NUM_TESTS; i++) {
         Stack_push(stack, tests[i]);
-        mu_ast(Stack_peek(stack) == tests[i], "Wrong next value.");
+        ut_ast(Stack_peek(stack) == tests[i], "Wrong next value.");
     }
 
-    mu_ast(Stack_count(stack) == NUM_TESTS, "Wrong count on push.");
+    ut_ast(Stack_count(stack) == NUM_TESTS, "Wrong count on push.");
 
     // STACK_FOREACH(stack, cur) {
     //     debug("VAL: %s", (char *)cur->value);
@@ -39,22 +39,22 @@ char *test_push_pop()
 
     for(i = NUM_TESTS - 1; i >= 0; i--) {
         char *val = Stack_pop(stack);
-        mu_ast(val == tests[i], "Wrong value on pop.");
+        ut_ast(val == tests[i], "Wrong value on pop.");
     }
 
-    mu_ast(Stack_count(stack) == 0, "Wrong count after pop.");
+    ut_ast(Stack_count(stack) == 0, "Wrong count after pop.");
 
     return NULL;
 }
 
 char *all_tests() {
-    mu_suite_start();
+    
 
-    mu_run_test(test_create);
-    mu_run_test(test_push_pop);
-    mu_run_test(test_destroy);
+    ut_add(test_create);
+    ut_add(test_push_pop);
+    ut_add(test_destroy);
 
     return NULL;
 }
 
-RUN_TESTS(all_tests);
+ut_run(all_tests);

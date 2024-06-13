@@ -1,4 +1,4 @@
-#include "minunit.h"
+#include <util/sob.h>
 #include <core/state.h>
 #include <core/graphics.h>
 #include <SDL.h>
@@ -7,24 +7,24 @@ StateManager *sm;
 Graphics g;
 
 unsigned int initState1() {
-    mu_msg("state 1 created");
+    ut_msg("state 1 created");
     return 0;
 }
 
 unsigned int updateState1(float dt) {
-    mu_msg("state 1 updated: %f", dt);
+    ut_msg("state 1 updated: %f", dt);
     return 0;
 }
 
 unsigned int destroyState1() {
-    mu_msg("state 1 destroyed");
+    ut_msg("state 1 destroyed");
     return 0;
 }
 
 char* test_init() {
 
     sm = StateManager_create();
-    mu_ast(sm != NULL, "Failed to init state manager.");
+    ut_ast(sm != NULL, "Failed to init state manager.");
     
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -68,12 +68,12 @@ char* test_loop() {
 
 
 char *all_tests() {
-    mu_suite_start();
+    
 
-    mu_run_test(test_init);
-    mu_run_test(test_loop);
+    ut_add(test_init);
+    ut_add(test_loop);
 
     return NULL;
 }
 
-RUN_TESTS(all_tests);
+ut_run(all_tests);

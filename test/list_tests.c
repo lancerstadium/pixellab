@@ -1,5 +1,5 @@
-#include "minunit.h"
-#include <utils/list.h>
+#include <util/sob.h>
+#include <util/list.h>
 #include <assert.h>
 
 static List *list = NULL;
@@ -11,7 +11,7 @@ char *test3 = "test3 data";
 char *test_create()
 {
     list = List_create();
-    mu_ast(list != NULL, "Failed to create list.");
+    ut_ast(list != NULL, "Failed to create list.");
 
     return NULL;
 }
@@ -29,24 +29,24 @@ char *test_destroy()
 char *test_push_pop()
 {
     List_push(list, test1);
-    mu_ast(List_last(list) == test1, "Wrong last value.");
+    ut_ast(List_last(list) == test1, "Wrong last value.");
 
     List_push(list, test2);
-    mu_ast(List_last(list) == test2, "Wrong last value");
+    ut_ast(List_last(list) == test2, "Wrong last value");
 
     List_push(list, test3);
-    mu_ast(List_last(list) == test3, "Wrong last value.");
-    mu_ast(List_count(list) == 3, "Wrong count on push.");
+    ut_ast(List_last(list) == test3, "Wrong last value.");
+    ut_ast(List_count(list) == 3, "Wrong count on push.");
 
     char *val = List_pop(list);
-    mu_ast(val == test3, "Wrong value on pop.");
+    ut_ast(val == test3, "Wrong value on pop.");
 
     val = List_pop(list);
-    mu_ast(val == test2, "Wrong value on pop.");
+    ut_ast(val == test2, "Wrong value on pop.");
 
     val = List_pop(list);
-    mu_ast(val == test1, "Wrong value on pop.");
-    mu_ast(List_count(list) == 0, "Wrong count after pop.");
+    ut_ast(val == test1, "Wrong value on pop.");
+    ut_ast(List_count(list) == 0, "Wrong count after pop.");
 
     return NULL;
 }
@@ -54,14 +54,14 @@ char *test_push_pop()
 char *test_unshift()
 {
     List_unshift(list, test1);
-    mu_ast(List_first(list) == test1, "Wrong first value.");
+    ut_ast(List_first(list) == test1, "Wrong first value.");
 
     List_unshift(list, test2);
-    mu_ast(List_first(list) == test2, "Wrong first value");
+    ut_ast(List_first(list) == test2, "Wrong first value");
 
     List_unshift(list, test3);
-    mu_ast(List_first(list) == test3, "Wrong last value.");
-    mu_ast(List_count(list) == 3, "Wrong count on unshift.");
+    ut_ast(List_first(list) == test3, "Wrong last value.");
+    ut_ast(List_count(list) == 3, "Wrong count on unshift.");
 
     return NULL;
 }
@@ -72,10 +72,10 @@ char *test_remove()
     // already tests the other cases
 
     char *val = List_remove(list, list->first->next);
-    mu_ast(val == test2, "Wrong removed element.");
-    mu_ast(List_count(list) == 2, "Wrong count after remove.");
-    mu_ast(List_first(list) == test3, "Wrong first after remove.");
-    mu_ast(List_last(list) == test1, "Wrong last after remove.");
+    ut_ast(val == test2, "Wrong removed element.");
+    ut_ast(List_count(list) == 2, "Wrong count after remove.");
+    ut_ast(List_first(list) == test3, "Wrong first after remove.");
+    ut_ast(List_last(list) == test1, "Wrong last after remove.");
 
     return NULL;
 }
@@ -83,14 +83,14 @@ char *test_remove()
 
 char *test_shift()
 {
-    mu_ast(List_count(list) != 0, "Wrong count before shift.");
+    ut_ast(List_count(list) != 0, "Wrong count before shift.");
 
     char *val = List_shift(list);
-    mu_ast(val == test3, "Wrong value on shift.");
+    ut_ast(val == test3, "Wrong value on shift.");
 
     val = List_shift(list);
-    mu_ast(val == test1, "Wrong value on shift.");
-    mu_ast(List_count(list) == 0, "Wrong count after shift.");
+    ut_ast(val == test1, "Wrong value on shift.");
+    ut_ast(List_count(list) == 0, "Wrong count after shift.");
 
     return NULL;
 }
@@ -98,16 +98,16 @@ char *test_shift()
 
 
 char *all_tests() {
-    mu_suite_start();
+    
 
-    mu_run_test(test_create);
-    mu_run_test(test_push_pop);
-    mu_run_test(test_unshift);
-    mu_run_test(test_remove);
-    mu_run_test(test_shift);
-    mu_run_test(test_destroy);
+    ut_add(test_create);
+    ut_add(test_push_pop);
+    ut_add(test_unshift);
+    ut_add(test_remove);
+    ut_add(test_shift);
+    ut_add(test_destroy);
 
     return NULL;
 }
 
-RUN_TESTS(all_tests);
+ut_run(all_tests);

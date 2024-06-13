@@ -32,7 +32,7 @@ else
         test_to_run="test/${test_name}_tests"
         if test -f $test_to_run
         then
-            if $VALGRIND ./$test_to_run 2>> tests/tests.log
+            if $VALGRIND ./$test_to_run 2>> test/tests.log
             then
                 printf "${ANSI_GREEN}[Test ${test_count} Passed]${ANSI_RESET}\n"
             else

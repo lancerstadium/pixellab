@@ -1,7 +1,7 @@
-#ifndef _Utils_Stack_h_
-#define _Utils_Stack_h_
+#ifndef _Util_Stack_h_
+#define _Util_Stack_h_
 
-#include <utils/list.h>
+#include <util/list.h>
 
 typedef List Stack;
 
