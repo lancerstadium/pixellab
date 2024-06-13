@@ -1,7 +1,7 @@
 ITEMNAME:=pixellab
 INCPATH=src/
 INCFLAGS=$(addprefix -I,$(INCPATH)) $(shell sdl2-config --cflags)
-CFLAGS=-g -O2 -Wall -Wextra $(INCFLAGS) -rdynamic -DCONFIG_NO_DEBUG $(OPTFLAGS)
+CFLAGS=-g -O2 -Wall -Wextra $(INCFLAGS) -rdynamic -DSOB_LOG_DBG_OFF $(OPTFLAGS)
 LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
 

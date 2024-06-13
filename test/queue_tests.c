@@ -36,7 +36,7 @@ char *test_send_recv()
     ut_ast(Queue_count(queue) == NUM_TESTS, "Wrong count on send.");
 
     QUEUE_FOREACH(queue, cur) {
-        debug("VAL: %s", (char *)cur->value);
+        log_dbg("VAL: %s", (char *)cur->value);
     }
 
     for(i = 0; i < NUM_TESTS; i++) {

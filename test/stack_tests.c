@@ -34,7 +34,7 @@ char *test_push_pop()
     ut_ast(Stack_count(stack) == NUM_TESTS, "Wrong count on push.");
 
     // STACK_FOREACH(stack, cur) {
-    //     debug("VAL: %s", (char *)cur->value);
+    //     log_dbg("VAL: %s", (char *)cur->value);
     // }
 
     for(i = NUM_TESTS - 1; i >= 0; i--) {

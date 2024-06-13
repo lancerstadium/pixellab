@@ -1,3 +1,13 @@
+/**
+ * @file sob.h
+ * @author lancerstadium (lancerstadium@163.com)
+ * @brief Super No Build Toolkit
+ * @version 0.0.4
+ * @date 2024-06-13
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef _UTIL_SOB_H_
 #define _UTIL_SOB_H_
 
@@ -6,10 +16,50 @@
 //                                       Include
 // ==================================================================================== //
 
+#ifndef _WIN32
+
+#define _POSIX_C_SOURCE 200809L
+#define PATH_SEP "/"
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
+
+typedef pid_t Pid;
+typedef int Fd;
+
+#else
+
+#define WIN32_MEAN_AND_LEAN
+#define PATH_SEP "\\"
+#include "windows.h"
+#include <process.h>
+
+typedef HANDLE Pid;
+typedef HANDLE Fd;
+
+struct dirent {
+    char d_name[MAX_PATH+1];
+};
+
+typedef struct DIR DIR;
+DIR *opendir(const char *dirpath);
+struct dirent *readdir(DIR *dirp);
+int closedir(DIR *dirp);
+LPSTR GetLastErrorAsString(void);
+
+#endif  // _WIN32
+
+
 #include <time.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 
 
@@ -22,7 +72,8 @@ extern "C" {
 // ==================================================================================== //
 
 // #define SOB_CL_OFF
-// #define SOB_DBG_OFF
+// #define SOB_LOG_DBG_OFF
+// #define SOB_LOG_TIME_OFF
 // 1e3: us, 1e6: ms, 1e9: s
 #define SOB_UT_TIMESCALE 1e6
 // 1: Open assert message, 0: No assert message
@@ -59,7 +110,10 @@ extern "C" {
 #define REP8(M, a1, a2, a3, a4, a5, a6, a7, a8) REP7 (M, a1, a2, a3, a4, a5, a6, a7) REP_SEP M (a8)
 #define REP_SEP ,
 
-
+#define STR(str) #str
+#define CONCAT(a, b) a ## b
+#define CONCAT3(a, b, c) a ## b ## c
+#define CONCAT4(a, b, c, d) a ## b ## c ## d
 
 // ==================================================================================== //
 //                                    macro: Args (VA)
@@ -182,6 +236,7 @@ extern "C" {
 #define _HIDDEN(msg)            ANSI_FMT(msg, ANSI_HIDDEN)
 #define _STRIKETHROUGH(msg)     ANSI_FMT(msg, ANSI_STRIKETHROUGH)
 
+#define _BLACK(msg)             ANSI_FMT(msg, ANSI_FG_BLACK)
 #define _RED(msg)               ANSI_FMT(msg, ANSI_FG_RED)
 #define _GREEN(msg)             ANSI_FMT(msg, ANSI_FG_GREEN)
 #define _YELLOW(msg)            ANSI_FMT(msg, ANSI_FG_YELLOW)
@@ -191,6 +246,7 @@ extern "C" {
 #define _WHITE(msg)             ANSI_FMT(msg, ANSI_FG_WHITE)
 #define _GREY(msg)              ANSI_FMT(msg, ANSI_FGB_BLACK)
 
+#define _BLACK_BD(msg)          ANSI_FMT(msg, ANSI_FG_BLACK ANSI_BOLD)
 #define _RED_BD(msg)            ANSI_FMT(msg, ANSI_FG_RED ANSI_BOLD)
 #define _GREEN_BD(msg)          ANSI_FMT(msg, ANSI_FG_GREEN ANSI_BOLD)
 #define _YELLOW_BD(msg)         ANSI_FMT(msg, ANSI_FG_YELLOW ANSI_BOLD)
@@ -200,6 +256,7 @@ extern "C" {
 #define _WHITE_BD(msg)          ANSI_FMT(msg, ANSI_FG_WHITE ANSI_BOLD)
 #define _GREY_BD(msg)           ANSI_FMT(msg, ANSI_FGB_BLACK ANSI_BOLD)
 
+#define _BLACK_UL(msg)          ANSI_FMT(msg, ANSI_FG_BLACK ANSI_UNDERLINE)
 #define _RED_UL(msg)            ANSI_FMT(msg, ANSI_FG_RED ANSI_UNDERLINE)
 #define _GREEN_UL(msg)          ANSI_FMT(msg, ANSI_FG_GREEN ANSI_UNDERLINE)
 #define _YELLOW_UL(msg)         ANSI_FMT(msg, ANSI_FG_YELLOW ANSI_UNDERLINE)
@@ -215,28 +272,71 @@ extern "C" {
 //                                    macro: log (LOG)
 // ==================================================================================== //
 
+typedef struct {
+    const char* name;
+    const char* color;
+} LogElem;
 
-#ifdef SOB_DBG_OFF
-#define debug(M, ...)
+static LogElem sob_log_elem[] = {
+    { "TRAC", ANSI_FGB_BLUE   },
+    { "DEBU", ANSI_FG_CYAN    },
+    { "INFO", ANSI_FGB_GREEN  },
+    { "WARN", ANSI_FGB_YELLOW },
+    { "ERRO", ANSI_FGB_RED    },
+    { "FATA", ANSI_FGB_RED    },
+    { "ASST", ANSI_FG_MAGENTA }
+};
+
+typedef struct {
+    const char* filename;
+    int line;
+    int col;
+} LogPos;
+
+#define log_pos_init        ((LogPos){ .filename = __FILE__, .line = __LINE__, .col = 0 })
+#define log_pos_fresh(pos)   
+
+typedef struct {
+    LogPos* pos;
+    LogElem* elem;
+} Logger;
+
+UNUSED static Logger sob_logger = {
+    &log_pos_init, 
+    sob_log_elem
+};
+
+#define log_errno               (errno == 0 ? "" : strerror(errno))
+#define log_msg(level, fmt, ...) \
+    do { \
+        time_t t = time(NULL); \
+        struct tm *tm = localtime(&t); \
+        fprintf(stderr, "[%02d:%02d:%02d] ", tm->tm_hour, tm->tm_min, tm->tm_sec); \
+        fprintf(stderr, "%s", sob_logger.elem[level].color); \
+        fprintf(stderr, "%4s " ANSI_RESET, sob_logger.elem[level].name); \
+        fprintf(stderr, _BLACK("%s:%d: "), __FILE__, __LINE__); \
+        fprintf(stderr, fmt, ##__VA_ARGS__); \
+        fprintf(stderr, _RED("%s"), log_errno); \
+        fprintf(stderr,"\n"); \
+    } while(0)
+
+#define log_trace(...)          log_msg(0, ##__VA_ARGS__)
+#ifdef SOB_LOG_DBG_OFF
+#define log_dbg(...)            log_msg(1, ##__VA_ARGS__)
 #else
-#define debug(M, ...) fprintf(stderr, _CYAN("[DEBU]") " (%s:%d): " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_dbg(...)
 #endif
+#define log_info(...)           log_msg(2, ##__VA_ARGS__)
+#define log_warn(...)           log_msg(3, ##__VA_ARGS__)
+#define log_err(...)            log_msg(4, ##__VA_ARGS__)
+#define log_fatal(...)          log_msg(5, ##__VA_ARGS__)
+#define log_ast(expr, ...)      if (!(expr)) { log_msg(6, ##__VA_ARGS__); exit(-1); }
+#define check(A, M, ...)        if(!(A)) { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
+#define check_mem(A)            check((A), "Out of memory.")
+#define sentinel(M, ...)        { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
+#define check_debug(A, M, ...)  if(!(A)) { log_dbg(M, ##__VAmsg_ARGS__); errno=0; goto error; }
 
-#define clean_errno() (errno == 0 ? "None" : strerror(errno))
 
-#define log_err(M, ...) fprintf(stderr, _RED("[ERRO]") " (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
-
-#define log_warn(M, ...) fprintf(stderr, _YELLOW("[WARN]") " (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
-
-#define log_info(M, ...) fprintf(stderr, _BLUE("[INFO]") " (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-
-#define check(A, M, ...) if(!(A)) { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
-
-#define sentinel(M, ...)  { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
-
-#define check_mem(A) check((A), "Out of memory.")
-
-#define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VAmsg_ARGS__); errno=0; goto error; }
 
 // ==================================================================================== //
 //                                    macro: Unit Test (UT)
@@ -257,7 +357,7 @@ typedef struct {
     double t_tot;                   /* total test time taken */
 } UnitTest;
 
-static UnitTest ut = {
+UNUSED static UnitTest sob_ut = {
     .n_fail = 0,
     .n_pass = 0,
     .n_test = 0,
@@ -272,17 +372,17 @@ static UnitTest ut = {
     .t_tot = 0
 };
 
-#define _UT_NRES(res)               ut.n_test++; ((res == NULL) ? (ut.n_pass++) : (ut.n_fail++))
+#define _UT_NRES(res)               sob_ut.n_test++; ((res == NULL) ? (sob_ut.n_pass++) : (sob_ut.n_fail++))
 #define _UT_SRES(res)               ((res == NULL) ? _GREEN("PASS") : _RED("FAIL"))
-#define _UT_TSTART()                clock_gettime(CLOCK_MONOTONIC, &ut.t_s); 
+#define _UT_TSTART()                clock_gettime(CLOCK_MONOTONIC, &sob_ut.t_s); 
 #define _UT_TEND() \
     do { \
-        clock_gettime(CLOCK_MONOTONIC, &ut.t_e); \
-        ut.t_tak = ((ut.t_e.tv_sec - ut.t_s.tv_sec) * 1e9 + ut.t_e.tv_nsec - ut.t_s.tv_nsec) / SOB_UT_TIMESCALE; \
-        if (ut.t_e.tv_nsec < ut.t_s.tv_nsec) { \
-            ut.t_tak += 1; \
+        clock_gettime(CLOCK_MONOTONIC, &sob_ut.t_e); \
+        sob_ut.t_tak = ((sob_ut.t_e.tv_sec - sob_ut.t_s.tv_sec) * 1e9 + sob_ut.t_e.tv_nsec - sob_ut.t_s.tv_nsec) / SOB_UT_TIMESCALE; \
+        if (sob_ut.t_e.tv_nsec < sob_ut.t_s.tv_nsec) { \
+            sob_ut.t_tak += 1; \
         } \
-        ut.t_tot += ut.t_tak; \
+        sob_ut.t_tot += sob_ut.t_tak; \
     } while (0)
 
 #define ut_msg(...) \
@@ -295,30 +395,31 @@ static UnitTest ut = {
 #define ut_ast(test, message) \
     if (!(test)) {\
         printf("│  │ " _YELLOW("ast: ") _RED("%-38s") " │\n", #test); \
-        ut_msg(ut.msg); \
-        return ut.msg; \
+        ut_msg(message); \
+        log_err(message); \
+        return message; \
     }
 
 #define ut_add(test) \
     do { \
-        debug("\n──────%s", " Sub: " _BLUE(#test)); \
+        log_dbg("\n──────%s", " Sub: " _BLUE(#test)); \
         _UT_TSTART(); \
-        ut.msg = test(); \
+        sob_ut.msg = test(); \
         _UT_TEND(); \
-        _UT_NRES(ut.msg); \
-        printf("│  ├── " _MAGENTA("%-2d ") _BLUE("%-18s") _CYAN("%12.4f %2s") " %s │\n", ut.n_test, #test, ut.t_tak, ut.t_sc, _UT_SRES(ut.msg));\
-        debug("total exec %.3f %2s", ut.t_tak, ut.t_sc); \
-        if (ut.msg) return ut.msg; \
+        _UT_NRES(sob_ut.msg); \
+        printf("│  ├── " _MAGENTA("%-2d ") _BLUE("%-18s") _CYAN("%12.4f %2s") " %s │\n", sob_ut.n_test, #test, sob_ut.t_tak, sob_ut.t_sc, _UT_SRES(sob_ut.msg));\
+        log_dbg("total exec %.3f %2s", sob_ut.t_tak, sob_ut.t_sc); \
+        if (sob_ut.msg) return sob_ut.msg; \
     } while(0)
     
 
 #define ut_run(name) \
 int main(int, char *argv[]) {\
-    debug("\n\n────── Run: " _BLUE("%s"), argv[0]);\
+    log_dbg("\n\n────── Run: " _BLUE("%s"), argv[0]);\
     printf("┌────────────────────────────────────────────────┐\n");\
     printf("│ Test: " _BLUE("%-40s") " │\n", argv[0]);\
     char *result = name();\
-    printf("│ Sum: " _MAGENTA("%-2d ") "[%2d " _GREEN("PASS") " %2d " _RED("FAIL") "] " _CYAN("%12.4f %2s") " %s │\n", ut.n_test, ut.n_pass, ut.n_fail, ut.t_tot, ut.t_sc, _UT_SRES(result));\
+    printf("│ Sum: " _MAGENTA("%-2d ") "[%2d " _GREEN("PASS") " %2d " _RED("FAIL") "] " _CYAN("%12.4f %2s") " %s │\n", sob_ut.n_test, sob_ut.n_pass, sob_ut.n_fail, sob_ut.t_tot, sob_ut.t_sc, _UT_SRES(result));\
     printf("├────────────────────────────────────────────────┤\n");\
     if (result == NULL) { \
         printf("│ " _CYAN("%-3s ") _BLUE("%-37s ") "%s │\n", "Res" , argv[0], _GREEN("PASS")); \

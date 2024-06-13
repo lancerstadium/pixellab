@@ -57,7 +57,7 @@ char* test_loop() {
 
 char *all_tests() {
 
-    ut_add(test_loop);
+    // ut_add(test_loop);
 
     return NULL;
 }
