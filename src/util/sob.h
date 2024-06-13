@@ -61,6 +61,7 @@ LPSTR GetLastErrorAsString(void);
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 #ifdef __cplusplus
@@ -73,11 +74,15 @@ extern "C" {
 
 // #define SOB_CL_OFF
 // #define SOB_LOG_DBG_OFF
-// #define SOB_LOG_TIME_OFF
 // 1e3: us, 1e6: ms, 1e9: s
-#define SOB_UT_TIMESCALE 1e6
+#define SOB_UT_TIMESC 1e6
 // 1: Open assert message, 0: No assert message
 #define SOB_UT_ASTMSG 0
+// Max sub command number
+#define SOB_AP_MSCMD 12
+#define SOB_AP_LFLAG "--"
+#define SOB_AP_SFLAG "-"
+#define SOB_AP_GCMD  "all"
 
 
 // ==================================================================================== //
@@ -337,7 +342,6 @@ UNUSED static Logger sob_logger = {
 #define check_debug(A, M, ...)  if(!(A)) { log_dbg(M, ##__VAmsg_ARGS__); errno=0; goto error; }
 
 
-
 // ==================================================================================== //
 //                                    macro: Unit Test (UT)
 // ==================================================================================== //
@@ -365,7 +369,7 @@ UNUSED static UnitTest sob_ut = {
     .quiet = 0,
     .msg = NULL,
 
-    .t_sc = (SOB_UT_TIMESCALE == 1e3) ? "us" : ((SOB_UT_TIMESCALE == 1e6) ? "ms" : "s"),
+    .t_sc = (SOB_UT_TIMESC == 1e3) ? "us" : ((SOB_UT_TIMESC == 1e6) ? "ms" : "s"),
     .t_s = {0},
     .t_e = {0},
     .t_tak = 0,
@@ -378,7 +382,7 @@ UNUSED static UnitTest sob_ut = {
 #define _UT_TEND() \
     do { \
         clock_gettime(CLOCK_MONOTONIC, &sob_ut.t_e); \
-        sob_ut.t_tak = ((sob_ut.t_e.tv_sec - sob_ut.t_s.tv_sec) * 1e9 + sob_ut.t_e.tv_nsec - sob_ut.t_s.tv_nsec) / SOB_UT_TIMESCALE; \
+        sob_ut.t_tak = ((sob_ut.t_e.tv_sec - sob_ut.t_s.tv_sec) * 1e9 + sob_ut.t_e.tv_nsec - sob_ut.t_s.tv_nsec) / SOB_UT_TIMESC; \
         if (sob_ut.t_e.tv_nsec < sob_ut.t_s.tv_nsec) { \
             sob_ut.t_tak += 1; \
         } \
@@ -402,7 +406,7 @@ UNUSED static UnitTest sob_ut = {
 
 #define ut_add(test) \
     do { \
-        log_dbg("\n──────%s", " Sub: " _BLUE(#test)); \
+        log_dbg("\n───── Sub: %s", _BLUE(#test)); \
         _UT_TSTART(); \
         sob_ut.msg = test(); \
         _UT_TEND(); \
@@ -415,7 +419,7 @@ UNUSED static UnitTest sob_ut = {
 
 #define ut_run(name) \
 int main(int, char *argv[]) {\
-    log_dbg("\n\n────── Run: " _BLUE("%s"), argv[0]);\
+    log_dbg("\n\n───── Run: " _BLUE("%s"), argv[0]);\
     printf("┌────────────────────────────────────────────────┐\n");\
     printf("│ Test: " _BLUE("%-40s") " │\n", argv[0]);\
     char *result = name();\
@@ -431,6 +435,53 @@ int main(int, char *argv[]) {\
     printf("└────────────────────────────────────────────────┘\n"); \
     exit(result != 0);\
 }
+
+
+// ==================================================================================== //
+//                                    macro: argparse (AP)
+// ==================================================================================== //
+
+typedef struct {
+    char *sarg;
+    char *larg;
+    bool has_val;
+    char *val;
+    char *help;
+
+    union {
+        int i;
+        bool b;
+        float f;
+        char *s;
+        void *v;
+    };
+} APArg;
+
+typedef void (*AP_CMD_CALLBACK)(int argc, char *argv[], char *envp[]);
+
+typedef struct {
+    char* name;
+    char* desc;
+    bool  is_sub;
+    APArg* args;
+    int   n_args;
+    AP_CMD_CALLBACK fn;
+} APCmd;
+
+typedef void (*AP_CMD_PRINT_CALLBACK)(APCmd *);
+
+typedef struct {
+    char* prog_name;
+    char* prog_name_without_path;
+    char* prog_desc;
+    int n_cmds;
+    APCmd cmds[SOB_AP_MSCMD];
+    bool  has_global;
+    bool  has_subcmd;
+    int cur_cmd;
+    AP_CMD_PRINT_CALLBACK print_cmd;
+} ArgParser;
+
 
 
 #ifdef __cplusplus
