@@ -81,9 +81,11 @@ extern "C" {
 #define SOB_UT_ASTMSG 0
 // Max sub command number
 #define SOB_AP_MSCMD 12
+// Show flag numbers
+#define SOB_AP_NFLAG 3
 #define SOB_AP_LFLAG "--"
 #define SOB_AP_SFLAG "-"
-#define SOB_AP_GCMD  "all"
+#define SOB_AP_GLCMD "all"
 
 
 // ==================================================================================== //
@@ -284,7 +286,17 @@ typedef const char * Cstr;
 #define _WHITE_UL(msg)              ANSI_FMT(msg, ANSI_FG_WHITE ANSI_UNDERLINE)
 #define _GREY_UL(msg)               ANSI_FMT(msg, ANSI_FGB_BLACK ANSI_UNDERLINE)
 
+#define _BLACK_IT(msg)              ANSI_FMT(msg, ANSI_FG_BLACK ANSI_ITALIC)
+#define _RED_IT(msg)                ANSI_FMT(msg, ANSI_FG_RED ANSI_ITALIC)
+#define _GREEN_IT(msg)              ANSI_FMT(msg, ANSI_FG_GREEN ANSI_ITALIC)
+#define _YELLOW_IT(msg)             ANSI_FMT(msg, ANSI_FG_YELLOW ANSI_ITALIC)
+#define _BLUE_IT(msg)               ANSI_FMT(msg, ANSI_FG_BLUE ANSI_ITALIC)
+#define _MAGENTA_IT(msg)            ANSI_FMT(msg, ANSI_FG_MAGENTA ANSI_ITALIC)
+#define _CYAN_IT(msg)               ANSI_FMT(msg, ANSI_FG_CYAN ANSI_ITALIC)
+#define _WHITE_IT(msg)              ANSI_FMT(msg, ANSI_FG_WHITE ANSI_ITALIC)
+#define _GREY_IT(msg)               ANSI_FMT(msg, ANSI_FGB_BLACK ANSI_ITALIC)
 
+#define _WHITE_BD_UL(msg)           ANSI_FMT(msg, ANSI_FG_WHITE ANSI_BOLD ANSI_UNDERLINE)
 
 // ==================================================================================== //
 //                                    sob: log (LOG)
@@ -312,6 +324,7 @@ typedef struct {
         ERROR_AP_NO_SUBCMD,
         ERROR_AP_LOST_ARG_VAL,
         ERROR_AP_EXTRA_VAL,
+        ERROR_AP_NO_EXIST_ARG,
         ERROR_AP_NO_EXIST_VAL,
         ERROR_AP_LOST_ARG_NAME,
         ERROR_AP_NO_EXIST_SUBCMD
@@ -325,6 +338,7 @@ UNUSED static LogError sob_log_error[] = {
     { ERROR_AP_NO_SUBCMD        , "No Sub Command"              },
     { ERROR_AP_LOST_ARG_VAL     , "Lost Arg Value"              },
     { ERROR_AP_EXTRA_VAL        , "Extra Arg Value"             },
+    { ERROR_AP_NO_EXIST_ARG     , "No Exist Arg"                },
     { ERROR_AP_NO_EXIST_VAL     , "No Exist Arg Value"          },
     { ERROR_AP_LOST_ARG_NAME    , "Lost Arg Name"               },
     { ERROR_AP_NO_EXIST_SUBCMD  , "No Exist Sub Command"        }
@@ -377,10 +391,10 @@ UNUSED static Logger sob_logger = {
 #define log_info(...)               log_msg(2, ##__VA_ARGS__)
 #define log_warn(...)               log_msg(3, ##__VA_ARGS__)
 #define log_err(...)                log_msg(4, ##__VA_ARGS__)
-#define log_err_no(no, ...)         sob_logger.no = no; log_err(__VA_ARGS__)
+#define log_err_no(N, ...)          sob_logger.no = N; log_err(__VA_ARGS__)
 #define log_fatal(...)              log_msg(5, ##__VA_ARGS__)
 #define log_ast(expr, ...)          if (!(expr)) { log_msg(6, ##__VA_ARGS__); exit(-1); }
-#define log_ast_no(expr, no, ...)   if (!(expr)) { sob_logger.no = no; log_msg(6, ##__VA_ARGS__); exit(-1); }
+#define log_ast_no(expr, N, ...)    if (!(expr)) { sob_logger.no = N; log_msg(6, ##__VA_ARGS__); exit(-1); }
 #define check(A, M, ...)            if(!(A)) { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
 #define check_mem(A)                check((A), "Out of memory.")
 #define sentinel(M, ...)            { log_err(M, ##__VA_ARGS__); errno=0; goto error; }
@@ -826,19 +840,19 @@ typedef struct {
         float f;
         char *s;
         void *v;
-    } val;
+    } init;
 } ArgParserArg;
 
 typedef void (*ArgParser_cmd_fn)(int argc, char *argv[], char *envp[]);
 
-DSArray_def(ArgParserArg)
+
 typedef struct {
     const char* name;
     const char* desc;
     const char* uasge;
 
     bool  is_sub;
-    DSArray(ArgParserArg) *args;
+    ArgParserArg *args;
     int   n_args;
     ArgParser_cmd_fn fn;
 } ArgParserCmd;
@@ -872,48 +886,220 @@ UNUSED static ArgParser sob_ap = {
     .print_fn   = NULL
 };
 
-#define ArgParserArg_get(args, n)       DSArray_get(ArgParserArg, args, n)
+#define ArgParser_err_no(no, ...)       log_err_no(no, "[ArgParser]: " ##__VA_ARGS__)
 #define ArgParser_ast(expr, ...)        log_ast(expr, "[ArgParser]: " ##__VA_ARGS__)
 #define ArgParser_ast_no(expr, no, ...) log_ast_no(expr, no, "[ArgParser]: " ##__VA_ARGS__)
-#define ArgParser_cur_cmd               (sob_ap.cmds[sob_ap.cur_cmd])
+#define ArgParser_def_args(name)        static ArgParserArg name[]
+#define ArgParser_def_fn(name)          void name(int argc, char *argv[], char *envp[])
+#define ArgParser_arg_END               { 0 }
+#define ArgParser_arg_INPUT             { .sarg = "i", .larg = "input", .init.s = "", .help = "set input file" }
+#define ArgParser_arg_OUTPUT            { .sarg = "o", .larg = "output", .init.s = "", .help = "set output file" }
+#define ArgParser_cur_cmd               (&sob_ap.cmds[sob_ap.cur_cmd])
 #define ArgParser_max_cmd               (sob_ap.cmds[sob_ap.n_cmd])
-#define ArgParser_init(prog_desc, print_fn)       \
+#define ArgParser_init(Prog_desc, Print_fn)       \
     do {                                          \
-        sob_ap.prog_desc = prog_desc;             \
-        if (print_fn) sob_ap.print_fn = print_fn; \
+        sob_ap.prog_desc = Prog_desc;             \
+        if (Print_fn) sob_ap.print_fn = Print_fn; \
     } while (0)
 
-#define ArgParser_add_cmd(name, desc, usage, fn, args)                                                                                          \
-    do {                                                                                                                                        \
-        if (!name) {                                                                                                                            \
-            sob_ap.has_global = true;                                                                                                           \
-        } else if (strcmp(name, SOB_AP_GCMD) == 0) {                                                                                            \
-            sob_ap.has_global = true;                                                                                                           \
-            sob_ap.has_subcmd = true;                                                                                                           \
-        } else {                                                                                                                                \
-            sob_ap.has_subcmd = true;                                                                                                           \
-        }                                                                                                                                       \
-        ArgParser_ast_no(!(sob_ap.has_global || sob_ap.has_subcmd), ERROR_AP_NO_SUBCMD);                                                        \
-        ArgParser_ast_no(sob_ap.cur_cmd >= SOB_AP_MSCMD, ERROR_AP_NO_EXIST_SUBCMD);                                                             \
-        ArgParser_max_cmd.name = name;                                                                                                          \
-        ArgParser_max_cmd.desc = (desc == NULL) ? "" : desc;                                                                                    \
-        ArgParser_max_cmd.uasge = (usage == NULL) ? "" : usage;                                                                                 \
-        ArgParser_max_cmd.fn = fn;                                                                                                              \
-        ArgParser_max_cmd.args = args;                                                                                                          \
-        int n_args = 0;                                                                                                                         \
-        while (1) {                                                                                                                             \
-            if (ArgParserArg_get(args, n_args).sarg || ArgParserArg_get(args, n_args).larg) {                                                   \
-                ArgParserArg_get(args, n_args).help = (ArgParserArg_get(args, n_args).help == NULL) ? "" : ArgParserArg_get(args, n_args).help; \
-                n_args++;                                                                                                                       \
-            } else {                                                                                                                            \
-                break;                                                                                                                          \
-            }                                                                                                                                   \
-        }                                                                                                                                       \
-        ArgParser_max_cmd.n_args = n_args;                                                                                                      \
-        sob_ap.n_cmd++;                                                                                                                         \
+#define ArgParser_add_cmd(Name, Desc, Usage, Fn, Args)                                    \
+    do {                                                                                  \
+        if (!Name) {                                                                      \
+            sob_ap.has_global = true;                                                     \
+        } else if (strcmp(Name, SOB_AP_GLCMD) == 0) {                                      \
+            sob_ap.has_global = true;                                                     \
+            sob_ap.has_subcmd = true;                                                     \
+        } else {                                                                          \
+            sob_ap.has_subcmd = true;                                                     \
+        }                                                                                 \
+        ArgParser_ast_no(sob_ap.has_global || sob_ap.has_subcmd, ERROR_AP_NO_SUBCMD);  \
+        ArgParser_ast_no(sob_ap.cur_cmd < SOB_AP_MSCMD, ERROR_AP_NO_EXIST_SUBCMD);       \
+        ArgParser_max_cmd.name = Name;                                                    \
+        ArgParser_max_cmd.desc = (Desc == NULL) ? "" : Desc;                              \
+        ArgParser_max_cmd.uasge = (Usage == NULL) ? "" : Usage;                           \
+        ArgParser_max_cmd.fn = Fn;                                                        \
+        ArgParser_max_cmd.args = Args;                                                    \
+        int n_args = 0;                                                                   \
+        while (1) {                                                                       \
+            if (Args[n_args].sarg || Args[n_args].larg) {                                 \
+                Args[n_args].help = (Args[n_args].help == NULL) ? "" : Args[n_args].help; \
+                n_args++;                                                                 \
+            } else {                                                                      \
+                break;                                                                    \
+            }                                                                             \
+        }                                                                                 \
+        ArgParser_max_cmd.n_args = n_args;                                                \
+        sob_ap.n_cmd++;                                                                   \
+    } while (0)
+
+#define ArgParser_print_base(Cmd)                                                          \
+    do {                                                                                   \
+        fprintf(stderr, _GREEN_BD(" %8s") _BLACK_IT("  %s\n"), (Cmd)->name, (Cmd)->desc);      \
+        for (int i = 0; i < (Cmd)->n_args; i++) {                                            \
+            if (i >= SOB_AP_NFLAG) {                                                       \
+                fprintf(stderr, "       " _RED("%s%s") "  %s%-10s" _BLACK_IT("%s\n"),      \
+                        SOB_AP_SFLAG, "h", SOB_AP_LFLAG, "help", "Get more info ...");     \
+                break;                                                                     \
+            }                                                                              \
+            fprintf(stderr, "       " _RED("%s%s") "  %s%-10s" _BLACK_IT("%s\n"),          \
+                    SOB_AP_SFLAG, (Cmd)->args[i].sarg, SOB_AP_LFLAG, (Cmd)->args[i].larg, (Cmd)->args[i].help); \
+        }                                                                                  \
+    } while (0)
+
+#define ArgParser_print() \
+    do {                 \
+        fprintf(stderr, _WHITE(" %s\n "), sob_ap.prog_desc); \
+        if (sob_ap.n_cmd > 1) { \
+            fprintf(stderr, _WHITE_BD_UL("Command:\n")); \
+            for (int i = 0; i < sob_ap.n_cmd; i++) { \
+                ArgParser_print_base(&sob_ap.cmds[i]); \
+            } \
+        } else { \
+            sob_ap.print_fn(ArgParser_cur_cmd); \
+        } \
+    } while(0)
+
+#define _ArgParser_cmd(Argc, Argv) \
+    do { \
+        if (Argc > 0) { \
+            if (strncmp((const char*)Argv + 0, "-h", 2) == 0 || strncmp((const char*)Argv + 0, "--help", 6) == 0) { \
+                ArgParser_print(); \
+                exit(ERROR_NONE); \
+            } \
+        } \
+        bool is_arg_name = true; \
+        int count = 0; \
+        int sflag_len = strlen(SOB_AP_SFLAG); \
+        int lflag_len = strlen(SOB_AP_LFLAG); \
+        ArgParserArg *arg = NULL; \
+        char *arg_name = NULL; \
+        while(count < Argc) { \
+            char *need_parse = (char *)(Argv + count); \
+            int need_parse_len = strlen(need_parse); \
+            bool is_short = strncmp(need_parse, SOB_AP_SFLAG, MIN(sflag_len, need_parse_len)) == 0; \
+            bool is_long = strncmp(need_parse, SOB_AP_LFLAG, MIN(lflag_len, need_parse_len)) == 0; \
+            bool is_file = false; \
+            FILE *fp = fopen(need_parse, "r"); \
+            if(fp) { is_file = true; } \
+            fclose(fp); \
+            if(is_short || is_long) { \
+                is_arg_name = true; \
+                const char *prefix; \
+                if(is_short) { prefix = SOB_AP_SFLAG; } else { prefix = SOB_AP_LFLAG; } \
+                arg_name = need_parse + strlen(prefix); \
+                bool exist = false; \
+                for(int i = 0; i < ArgParser_cur_cmd->n_args; i++) { \
+                    arg = &(ArgParser_cur_cmd->args[i]); \
+                    bool short_exist = strcmp(arg->sarg, arg_name) == 0; \
+                    bool long_exist = strcmp(arg->larg, arg_name) == 0; \
+                    if(short_exist || long_exist) { \
+                        exist = true; \
+                        break; \
+                    } \
+                } \
+                if(!exist) { \
+                    ArgParser_err_no(ERROR_AP_NO_EXIST_ARG); \
+                    exit(ERROR_AP_NO_EXIST_ARG); \
+                } \
+            } else { \
+                is_arg_name = false; \
+            } \
+            if(arg == NULL) { \
+                if(is_file) { \
+                    bool exist = false; \
+                    for(int i = 0; i < ArgParser_cur_cmd->n_args; i++) { \
+                        arg = &(ArgParser_cur_cmd->args[i]); \
+                        bool short_exist = strcmp("i", need_parse) == 0; \
+                        bool long_exist = strcmp("input", need_parse) == 0; \
+                        if(short_exist || long_exist) { \
+                            exist = true; \
+                            break; \
+                        } \
+                    } \
+                    if(!exist) { \
+                        ArgParser_err_no(ERROR_AP_NO_EXIST_ARG); \
+                        exit(ERROR_AP_NO_EXIST_ARG); \
+                    } \
+                } else { \
+                    ArgParser_err_no(ERROR_AP_LOST_ARG_NAME); \
+                    exit(ERROR_AP_LOST_ARG_NAME); \
+                } \
+            } \
+            if(!is_arg_name && !arg->has_val) { \
+                ArgParser_err_no(ERROR_AP_EXTRA_VAL); \
+                exit(ERROR_AP_EXTRA_VAL); \
+            } \
+            if(!is_arg_name && arg->has_val) { \
+                arg->literal = need_parse; \
+                arg = NULL; \
+            } \
+            if(is_arg_name && !arg->has_val) { \
+                arg->init.b = true; \
+            } \
+            count++; \
+        } \
+        if(arg && arg->has_val) { \
+            ArgParser_err_no(ERROR_AP_LOST_ARG_VAL); \
+            exit(ERROR_AP_LOST_ARG_VAL); \
+        } \
     } while (0)
 
 
+#define ArgParser_run(Argc, Argv, Envp) \
+    do {                                \
+        int argc_copy = Argc;           \
+        char **argv_copy = Argv;        \
+        if (Argc > 1) {                 \
+            if (strcmp(Argv[1], "-h") == 0 || strcmp(Argv[1], "--help") == 0) { \
+                ArgParser_print();      \
+                exit(ERROR_NONE);                 \
+            }                            \
+        }                                \
+        sob_ap.prog_path = Argv[0];     \
+        sob_ap.prog_name = strrchr(sob_ap.prog_path, '/'); \
+        if(sob_ap.prog_name) { sob_ap.prog_name++; } else { sob_ap.prog_name = sob_ap.prog_path; } \
+        Argc--; Argv++;        \
+        if(sob_ap.has_subcmd) { \
+            char *subcmd; \
+            bool exist = false; \
+            if (!Argc && !sob_ap.has_global) { \
+                ArgParser_print(); \
+                ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD); \
+                exit(ERROR_AP_NO_EXIST_SUBCMD); \
+            } else if (Argc && sob_ap.has_global) { \
+                subcmd = Argv[0]; \
+                for (int i = 0; i < sob_ap.n_cmd; i++) { \
+                    if (strcmp(subcmd, sob_ap.cmds[i].name) == 0) { \
+                        sob_ap.cmds[i].is_sub = true; \
+                        sob_ap.cur_cmd = i; \
+                        exist = true; \
+                        break; \
+                    } \
+                } \
+                if (!exist) subcmd = SOB_AP_GLCMD; \
+            } else if (!Argc && sob_ap.has_global) { \
+                subcmd = SOB_AP_GLCMD; \
+            } else { \
+                subcmd = Argv[0]; \
+                for (int i = 0; i < sob_ap.n_cmd; i++) { \
+                    if (strcmp(subcmd, sob_ap.cmds[i].name) == 0) { \
+                        sob_ap.cmds[i].is_sub = true; \
+                        sob_ap.cur_cmd = i; \
+                        exist = true; \
+                        break; \
+                    } \
+                } \
+                if (!exist) { \
+                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD); \
+                    exit(ERROR_AP_NO_EXIST_SUBCMD); \
+                } \
+            } \
+        } else { \
+            sob_ap.cur_cmd = 0; \
+        } \
+        _ArgParser_cmd(Argc - (sob_ap.has_subcmd ? 1 : 0), Argv + (sob_ap.has_subcmd ? 1 : 0)); \
+        ArgParser_cur_cmd->fn(argc_copy, argv_copy, Envp); \
+    } while (0)
 
 
 // ArgParser* ArgParser_init(char* prog_desc, ArgParser_print_fn print_fn);

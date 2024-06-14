@@ -1,0 +1,78 @@
+[02:11:27] [36mDEBU [0m[30mtest/engine_tests.c:65: [0m
+
+───── Run: [34m./test/engine_tests[0m[31mOperation not permitted[0m
+[02:11:27] [36mDEBU [0m[30mtest/graphics_tests.c:79: [0m
+
+───── Run: [34m./test/graphics_tests[0m[31mOperation not permitted[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_algos_tests.c:91: [0m
+
+───── Run: [34m./test/list_algos_tests[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_algos_tests.c:85: [0m
+───── Sub: [34mtest_bubble_sort[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_algos_tests.c:85: [0mtotal exec 0.004 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_algos_tests.c:86: [0m
+───── Sub: [34mtest_merge_sort[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_algos_tests.c:86: [0mtotal exec 0.010 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:113: [0m
+
+───── Run: [34m./test/list_tests[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:103: [0m
+───── Sub: [34mtest_create[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:103: [0mtotal exec 0.002 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:104: [0m
+───── Sub: [34mtest_push_pop[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:104: [0mtotal exec 0.002 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:105: [0m
+───── Sub: [34mtest_unshift[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:105: [0mtotal exec 0.001 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:106: [0m
+───── Sub: [34mtest_remove[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:106: [0mtotal exec 0.001 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:107: [0m
+───── Sub: [34mtest_shift[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:107: [0mtotal exec 0.001 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:108: [0m
+───── Sub: [34mtest_destroy[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/list_tests.c:108: [0mtotal exec 0.000 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:62: [0m
+
+───── Run: [34m./test/queue_tests[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:55: [0m
+───── Sub: [34mtest_create[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:55: [0mtotal exec 0.001 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:56: [0m
+───── Sub: [34mtest_send_recv[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:39: [0mVAL: test1 data[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:39: [0mVAL: test2 data[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:39: [0mVAL: test3 data[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:56: [0mtotal exec 0.124 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:57: [0m
+───── Sub: [34mtest_destroy[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/queue_tests.c:57: [0mtotal exec 0.000 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:60: [0m
+
+───── Run: [34m./test/stack_tests[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:53: [0m
+───── Sub: [34mtest_create[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:53: [0mtotal exec 0.001 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:54: [0m
+───── Sub: [34mtest_push_pop[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:54: [0mtotal exec 0.002 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:55: [0m
+───── Sub: [34mtest_destroy[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/stack_tests.c:55: [0mtotal exec 0.000 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:104: [0m
+
+───── Run: [34m./test/state_tests[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:96: [0m
+───── Sub: [34mtest_init[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:96: [0mtotal exec 0.002 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:97: [0m
+───── Sub: [34mtest_scale[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:97: [0mtotal exec 0.000 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:98: [0m
+───── Sub: [34mtest_push_pop[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:98: [0mtotal exec 0.134 ms[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:99: [0m
+───── Sub: [34mtest_free[0m[31m[0m
+[02:11:27] [36mDEBU [0m[30mtest/state_tests.c:99: [0mtotal exec 0.000 ms[31m[0m
