@@ -1,11 +1,24 @@
 
 Running Unit Tests:
 ┌────────────────────────────────────────────────┐
-│ Test: ./tests/graphics_tests                   │
-│  ├── 1  test_init             332.3173 ms PASS │
-│ Sum: 1  [ 1 PASS  0 FAIL]     332.3173 ms PASS │
+│ Test: ./test/state_tests                       │
+│  ├── 1  test_init               0.0006 ms PASS │
+│  ├── 2  test_scale              0.0000 ms PASS │
+│  │ msg: state 1 created                        │
+│  │ msg: state 1/2 update 10.000000             │
+│  │ msg: ss.destory = 0x56289080b6d0            │
+│  │ msg: state 1 destroyed                      │
+│  │ msg: state 2 created                        │
+│  │ msg: state 1/2 update 10.000000             │
+│  │ msg: ss.destory = 0x56289080b790            │
+│  │ msg: state 2 destroyed                      │
+│  │ msg: state 1/2 update 11.000000             │
+│  │ msg: state 1 destroyed                      │
+│  ├── 3  test_push_pop           0.0034 ms PASS │
+│  ├── 4  test_free               0.0001 ms PASS │
+│ Sum: 4  [ 4 PASS  0 FAIL]       0.0040 ms PASS │
 ├────────────────────────────────────────────────┤
-│ Res ./tests/graphics_tests                PASS │
+│ Res ./test/state_tests                    PASS │
 └────────────────────────────────────────────────┘
 [Test 1 Passed]
 
