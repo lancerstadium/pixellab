@@ -1,4 +1,4 @@
-#include <util/sob.h>
+#include <sob/sob.h>
 #include <util/stack.h>
 #include <assert.h>
 

@@ -1,48 +1,61 @@
-ITEMNAME:=pixellab
-INCPATH=src/
-INCFLAGS=$(addprefix -I,$(INCPATH)) $(shell sdl2-config --cflags)
-CFLAGS=-g -O2 -Wall -Wextra $(INCFLAGS) -rdynamic -DSOB_LOG_DBG_OFF $(OPTFLAGS)
-LIBS=-ldl $(OPTLIBS)
-PREFIX?=/usr/local
-
-SOURCES=$(wildcard src/**/*.c src/*.c)
-OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
-
-TEST_SRC=$(wildcard test/*_tests.c)
-TESTS=$(patsubst %.c,%,$(TEST_SRC))
-
-TARGET=build/lib$(ITEMNAME).a
+CC = gcc
+APP = pixellab
+INCDIR = src
+SRCDIR = src
+BINDIR = bin
+OBJDIR = obj
+SOBDIR = src/sob
+INCFLAGS = $(addprefix -I,$(INCDIR)) $(shell sdl2-config --cflags)
+OPTFLAGS = 
+CFLAGS = -g -O2 -Wall -Wextra $(INCFLAGS) -rdynamic -DSOB_LOG_DBG_OFF $(OPTFLAGS)
+PREFIX ?= /usr/local
+LIBS = -ldl $(OPTLIBS)
 OS=$(shell lsb_release -si)
 ifeq ($(OS),Ubuntu)
-	LDLIBS=-l$(ITEMNAME) -L./build -lm -L/usr/lib/x86_64-linux-gnu/ $(shell sdl2-config --libs) -lSDL2_image -lSDL2_ttf
+	LDLIBS=-l$(APP) -L./build -lm -L/usr/lib/x86_64-linux-gnu/ $(shell sdl2-config --libs) -lSDL2_image -lSDL2_ttf
 endif
 
+SRCS=$(wildcard src/**/*.c src/*.c)
+OBJS=$(patsubst %.c,%.o,$(SRCS))
+
+SRCTEST=$(wildcard test/*_tests.c)
+TESTS=$(patsubst %.c,%,$(SRCTEST))
+
+TARGET=build/lib$(APP).a
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
+SOB_TARGET=sob
+BIN_TARGET=bin/$(APP)
 
 # Config
 CFG_REPORT=0
 CFG_TEST=
 
 # The Target Build
-all: $(TARGET) tests
+all: $(SOB_TARGET) $(TARGET) tests
 
 dev: CFLAGS=-g -Wall $(INCFLAGS) -Wall -Wextra $(OPTFLAGS)
 dev: all
 
 $(TARGET): CFLAGS += -fPIC
-$(TARGET): build $(OBJECTS)
-	ar rcs $@ $(OBJECTS)
+$(TARGET): build $(OBJS)
+	ar rcs $@ $(OBJS)
 	ranlib $@
 
-# $(SO_TARGET): $(TARGET) $(OBJECTS)
-# 	$(CC) -shared -o $@ $(OBJECTS)
+$(SOB_TARGET): 
+	$(CC) -o $@ $(SOBDIR)/sob.c -I$(SOBDIR)
+
+# $(SO_TARGET): $(TARGET) $(OBJS)
+# 	$(CC) -shared -o $@ $(OBJS)
+
+# $(BIN_TARGET): build $(OBJS)
+# 	$(CC) -o $@ $(OBJS)
+
 
 build:
 	@mkdir -p build
 	@mkdir -p bin
 
 # The Unit Tests
-.PHONY: tests
 tests: LDLIBS += $(TARGET)
 tests: $(TESTS)
 ifeq ($(CFG_REPORT),1)
@@ -64,7 +77,7 @@ log:
 
 # The Cleaner
 clean:
-	rm -rf build $(OBJECTS) $(TESTS)
+	rm -rf build $(SOB_TARGET) $(OBJS) $(TESTS)
 	rm -f test/tests.log test/valgrind.log
 	find . -name "*.gc*" -exec rm {} \;
 	rm -rf `find . -name "*.dSYM" -print`
@@ -80,10 +93,9 @@ commit:
 	git push
 
 # The Checker
-# 这个正则表达式是用来匹配可能存在安全风险的函数，
-# 例如strcpy，strncpy，strcat，strncat，memcpy，memmove，memset，sprintf，vsprintf等。
-# 这些函数在使用不当时可能会导致缓冲区溢出和其他安全漏洞。
 BADFUNCS='[^_.>a-zA-Z0-9](str(n?cpy|n?cat|xfrm|n?dup|str|pbrk|tok|_)|stpn?cpy|a?sn?printf|byte_)'
 check:
 	@echo Files with potentially dangerous functions.
-	@egrep $(BADFUNCS) $(SOURCES) || true
+	@egrep $(BADFUNCS) $(SRCS) || true
+
+.PHONY: tests sob
