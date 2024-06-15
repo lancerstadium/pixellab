@@ -1,5 +1,8 @@
-#include "sob.inc"
 #include "sob.h"
+
+
+
+#ifndef SOB_APP_OFF
 
 ArgParser_def_fn(all) {
     printf("Hello World\n");
@@ -23,6 +26,12 @@ int main(int argc, char *argv[], char *envp[]) {
     ArgParser_sys_cmd(CStrArray_new("uname", "-a", "help"));
     ArgParser_sys_cmd(CStrArray_new("ls", "-l"));
     
+    char* test;
+    Cstr* ss = CStrArray_new("ls", "-l", "hello");
+    CStrArray_join(ss, test, ", ");
+    printf("%s\n", test);
     ArgParser_run(argc, argv, envp);
     return 0;
 }
+
+#endif

@@ -74,6 +74,7 @@ extern "C" {
 //                                    sob: SOB Config (SOB)
 // ==================================================================================== //
 
+// #define SOB_APP_OFF
 // #define SOB_CL_OFF
 // #define SOB_LOG_DBG_OFF
 #define SOB_DS_DSIZE 64
@@ -745,7 +746,8 @@ DSArray_def(DSMap_idx_t)
 #define CStr_put(S)                 printf("%s", S)
 #define CStr_is_end(S1, S2)         ((CStr_len(S1) <= CStr_len(S2)) && (strncmp(S1 + CStr_len(S1) - CStr_len(S2), S2, CStr_len(S2)) == 0))
 #define CStr_find_end(S, C)         strrchr(S, C)
-#define CStrArray_new(...)          (Cstr[]) { __VA_ARGS__ , NULL }
+#define CStrArray_new(...)          (Cstr[]) { __VA_ARGS__ , NULL }        
+#define CStrArray_get(SA, I)        ((SA)[I])
 #define CStr_no_ext(S1, S2)                                               \
     do {                                                                  \
         char* ext = CStr_find_end(S1, '.');                               \
@@ -773,6 +775,35 @@ DSArray_def(DSMap_idx_t)
             memcpy(S2, S1, CStr_len(S1) + 1);         \
         }                                             \
     } while (0)
+
+#define CStrArray_size(SA, N)        \
+    do {                             \
+        N = 0;                       \
+        while ((SA)[N] != NULL) N++; \
+    } while (0)
+
+
+#define CStrArray_join(SA, S, SEP)                    \
+    do {                                              \
+        size_t n;                                     \
+        CStrArray_size(SA, n);                        \
+        size_t m = CStr_len(SEP) + 1;                 \
+        S = malloc(m);                                \
+        char* S_copy = S;                             \
+        for (int i = 0; i < n; i++) {                 \
+            if (i > 0) {                              \
+                m += CStr_len(SEP) + CStr_len(SA[i]); \
+                S_copy = realloc(S, m);               \
+                strcat(S_copy, SEP);                  \
+                strcat(S_copy, SA[i]);                \
+            } else {                                  \
+                m += CStr_len(SA[i]);                 \
+                S_copy = realloc(S, m);               \
+                strcat(S_copy, SA[i]);                \
+            }                                         \
+        }                                             \
+    } while (0)
+
 
 
 // ==================================================================================== //
