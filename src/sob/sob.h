@@ -912,9 +912,14 @@ UNUSED static ArgParser sob_ap = {
 
 #define ArgParser_add_cmd(Name, Desc, Usage, Fn, Args)                                    \
     do {                                                                                  \
-        if (!Name) {                                                                      \
+        ArgParser_max_cmd.name = (Name == NULL) ? (Fn == NULL ? "" : #Fn) : Name;         \
+        ArgParser_max_cmd.desc = (Desc == NULL) ? "" : Desc;                              \
+        ArgParser_max_cmd.uasge = (Usage == NULL) ? "" : Usage;                           \
+        ArgParser_max_cmd.fn = Fn;                                                        \
+        ArgParser_max_cmd.args = Args;                                                    \
+        if (strcmp(ArgParser_max_cmd.name, "") == 0) {                                    \
             sob_ap.has_global = true;                                                     \
-        } else if (strcmp(Name, SOB_AP_GLCMD) == 0) {                                     \
+        } else if (strcmp(ArgParser_max_cmd.name, SOB_AP_GLCMD) == 0) {                   \
             sob_ap.has_global = true;                                                     \
             sob_ap.has_subcmd = true;                                                     \
         } else {                                                                          \
@@ -922,11 +927,6 @@ UNUSED static ArgParser sob_ap = {
         }                                                                                 \
         ArgParser_ast_no(sob_ap.has_global || sob_ap.has_subcmd, ERROR_AP_NO_SUBCMD);     \
         ArgParser_ast_no(sob_ap.cur_cmd < SOB_AP_MSCMD, ERROR_AP_NO_EXIST_SUBCMD);        \
-        ArgParser_max_cmd.name = Name;                                                    \
-        ArgParser_max_cmd.desc = (Desc == NULL) ? "" : Desc;                              \
-        ArgParser_max_cmd.uasge = (Usage == NULL) ? "" : Usage;                           \
-        ArgParser_max_cmd.fn = Fn;                                                        \
-        ArgParser_max_cmd.args = Args;                                                    \
         int n_args = 0;                                                                   \
         while (1) {                                                                       \
             if (Args[n_args].sarg || Args[n_args].larg) {                                 \

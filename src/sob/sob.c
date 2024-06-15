@@ -3,7 +3,11 @@
 #include "sob.h"
 
 
-ArgParser_def_fn(default_fn) {
+ArgParser_def_fn(all) {
+    printf("Hello World\n");
+}
+
+ArgParser_def_fn(hello) {
     printf("Hello World\n");
 }
 
@@ -15,8 +19,8 @@ ArgParser_def_args(default_args) = {
 
 int main(int argc, char *argv[], char *envp[]) {
     ArgParser_init("Sob - Super Nobuild Toolkit with only .h file", NULL);
-    ArgParser_add_cmd("all", "run all", "This is usage", default_fn, default_args);
-    ArgParser_add_cmd("test", "run test", "This is usage", default_fn, default_args);
+    ArgParser_add_cmd(NULL, "run all" , "This is usage", all  , default_args);
+    ArgParser_add_cmd(NULL, "run test", "This is usage", hello, default_args);
     ArgParser_run(argc, argv, envp);
     return 0;
 }
