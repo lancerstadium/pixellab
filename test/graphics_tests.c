@@ -7,24 +7,24 @@ StateManager *sm;
 Graphics g;
 
 unsigned int initState1() {
-    ut_msg("state 1 created");
+    UnitTest_msg("state 1 created");
     return 0;
 }
 
 unsigned int updateState1(float dt) {
-    ut_msg("state 1 updated: %f", dt);
+    UnitTest_msg("state 1 updated: %f", dt);
     return 0;
 }
 
 unsigned int destroyState1() {
-    ut_msg("state 1 destroyed");
+    UnitTest_msg("state 1 destroyed");
     return 0;
 }
 
 char* test_init() {
 
     sm = StateManager_create();
-    ut_ast(sm != NULL, "Failed to init state manager.");
+    UnitTest_ast(sm != NULL, "Failed to init state manager.");
     
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -70,10 +70,10 @@ char* test_loop() {
 char *all_tests() {
     
 
-    // ut_add(test_init);
-    // ut_add(test_loop);
+    // UnitTest_add(test_init);
+    // UnitTest_add(test_loop);
 
     return NULL;
 }
 
-ut_run(all_tests);
+UnitTest_run(all_tests);
