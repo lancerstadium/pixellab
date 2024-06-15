@@ -272,6 +272,7 @@ typedef const char * Cstr;
 #define _CYAN(msg)                  ANSI_FMT(msg, ANSI_FG_CYAN)
 #define _WHITE(msg)                 ANSI_FMT(msg, ANSI_FG_WHITE)
 #define _GREY(msg)                  ANSI_FMT(msg, ANSI_FGB_BLACK)
+#define _PURPLE(msg)                  ANSI_FMT(msg, ANSI_FGB_MAGENTA)
 
 #define _BLACK_BD(msg)              ANSI_FMT(msg, ANSI_FG_BLACK ANSI_BOLD)
 #define _RED_BD(msg)                ANSI_FMT(msg, ANSI_FG_RED ANSI_BOLD)
@@ -282,6 +283,7 @@ typedef const char * Cstr;
 #define _CYAN_BD(msg)               ANSI_FMT(msg, ANSI_FG_CYAN ANSI_BOLD)
 #define _WHITE_BD(msg)              ANSI_FMT(msg, ANSI_FG_WHITE ANSI_BOLD)
 #define _GREY_BD(msg)               ANSI_FMT(msg, ANSI_FGB_BLACK ANSI_BOLD)
+#define _PURPLE_BD(msg)            ANSI_FMT(msg, ANSI_FGB_MAGENTA ANSI_BOLD)
 
 #define _BLACK_UL(msg)              ANSI_FMT(msg, ANSI_FG_BLACK ANSI_UNDERLINE)
 #define _RED_UL(msg)                ANSI_FMT(msg, ANSI_FG_RED ANSI_UNDERLINE)
@@ -292,6 +294,7 @@ typedef const char * Cstr;
 #define _CYAN_UL(msg)               ANSI_FMT(msg, ANSI_FG_CYAN ANSI_UNDERLINE)
 #define _WHITE_UL(msg)              ANSI_FMT(msg, ANSI_FG_WHITE ANSI_UNDERLINE)
 #define _GREY_UL(msg)               ANSI_FMT(msg, ANSI_FGB_BLACK ANSI_UNDERLINE)
+#define _PURPLE_UL(msg)            ANSI_FMT(msg, ANSI_FGB_MAGENTA ANSI_UNDERLINE)
 
 #define _BLACK_IT(msg)              ANSI_FMT(msg, ANSI_FG_BLACK ANSI_ITALIC)
 #define _RED_IT(msg)                ANSI_FMT(msg, ANSI_FG_RED ANSI_ITALIC)
@@ -374,7 +377,7 @@ UNUSED static Logger sob_logger = {
     ERROR_NONE
 };
 
-#define log_errno                   (sob_logger.no == ERROR_NONE ? (errno == 0 ? "" : strerror(errno)) : sob_logger.error->msg)
+#define log_errno                   (sob_logger.no == ERROR_NONE ? (errno == 0 ? "" : strerror(errno)) : sob_logger.error[sob_logger.no].msg)
 #define Log_msg(level, fmt, ...)                                                   \
     do {                                                                           \
         time_t t = time(NULL);                                                     \
@@ -894,9 +897,9 @@ UNUSED static ArgParser sob_ap = {
     .print_fn   = NULL
 };
 
-#define ArgParser_err_no(no, ...)       Log_err_no(no, "[ArgParser]: " ##__VA_ARGS__)
-#define ArgParser_ast(expr, ...)        Log_ast(expr, "[ArgParser]: " ##__VA_ARGS__)
-#define ArgParser_ast_no(expr, no, ...) Log_ast_no(expr, no, "[ArgParser]: " ##__VA_ARGS__)
+#define ArgParser_err_no(N, ...)        Log_err_no(N, "[ArgParser]: " __VA_ARGS__)
+#define ArgParser_ast(expr, ...)        Log_ast(expr, "[ArgParser]: " __VA_ARGS__)
+#define ArgParser_ast_no(expr, N, ...)  Log_ast_no(expr, N, "[ArgParser]: " ##__VA_ARGS__)
 #define ArgParser_def_args(name)        static ArgParserArg name[]
 #define ArgParser_def_fn(name)          void name(UNUSED int argc, UNUSED char *argv[], UNUSED char *envp[])
 #define ArgParser_arg_END               { 0 }
@@ -940,7 +943,19 @@ UNUSED static ArgParser sob_ap = {
         sob_ap.n_cmd++;                                                                   \
     } while (0)
 
-#define ArgParser_print_base(Cmd)                                                                               \
+#define ArgParser_print_base_command(Cmd) \
+    do {                                \
+        fprintf(stderr, "> " _BOLD("%s ") _GREEN_BD("%s") _BLACK_IT(" < ... >\n   ") _WHITE_BD_UL("Descr:") _BLACK_IT("  %s"), \
+                sob_ap.prog_name, Cmd->name, Cmd->desc); \
+        fprintf(stderr, "\n   " _WHITE_BD_UL("Usage:") _BLACK_IT("  %s\n"), Cmd->uasge); \
+        for (int i = 0; i < Cmd->n_args; i++) { \
+            fprintf(stderr, "       " _RED("%s%s") "  %s%-10s" _BLACK_IT("%s\n"), SOB_AP_SFLAG, Cmd->args[i].sarg, \
+                    SOB_AP_LFLAG, Cmd->args[i].larg, Cmd->args[i].help); \
+        } \
+        fprintf(stderr, "\n"); \
+    } while (0)
+
+#define ArgParser_print_help_command(Cmd)                                                                               \
     do {                                                                                                        \
         fprintf(stderr, _GREEN_BD(" %8s") _BLACK_IT("  %s\n"), (Cmd)->name, (Cmd)->desc);                       \
         for (int i = 0; i < (Cmd)->n_args; i++) {                                                               \
@@ -955,24 +970,29 @@ UNUSED static ArgParser sob_ap = {
         fprintf(stderr, "\n");                                                                                  \
     } while (0)
 
-#define ArgParser_print()                                                                       \
+#define ArgParser_print_parser()                                                                       \
     do {                                                                                        \
-        fprintf(stderr, _CYAN_BD(" %s") _WHITE(": %s\n "), sob_ap.prog_name, sob_ap.prog_desc); \
+        fprintf(stderr, "> " _BOLD("%s ") _WHITE(": %s\n "), sob_ap.prog_name, sob_ap.prog_desc); \
         if (sob_ap.n_cmd > 1) {                                                                 \
             fprintf(stderr, _WHITE_BD_UL("Usage:\n"));                                          \
             for (int i = 0; i < sob_ap.n_cmd; i++) {                                            \
-                ArgParser_print_base(&sob_ap.cmds[i]);                                          \
+                ArgParser_print_help_command(&sob_ap.cmds[i]);                                          \
             }                                                                                   \
         } else {                                                                                \
             sob_ap.print_fn(ArgParser_cur_cmd);                                                 \
         }                                                                                       \
     } while (0)
 
+
+#define ArgParser_print_command() \
+    if(!sob_ap.print_fn) { ArgParser_print_base_command(ArgParser_cur_cmd); } \
+    else { sob_ap.print_fn(ArgParser_cur_cmd); }
+
 #define _ArgParser_cmd(Argc, Argv)                                                                                  \
     do {                                                                                                            \
         if (Argc > 0) {                                                                                             \
             if (strcmp(Argv[0], "-h") == 0 || strcmp(Argv[0], "--help") == 0) { \
-                ArgParser_print();                                                                                  \
+                ArgParser_print_command();                                                                                  \
                 exit(ERROR_NONE);                                                                                   \
             }                                                                                                       \
         }                                                                                                           \
@@ -985,7 +1005,6 @@ UNUSED static ArgParser sob_ap = {
         while (count < Argc) {                                                                                      \
             char* need_parse = Argv[count];                                                               \
             int need_parse_len = strlen(need_parse);                                                                \
-            LOG_TAG \
             bool is_short = strncmp(need_parse, SOB_AP_SFLAG, MIN(sflag_len, need_parse_len)) == 0;                 \
             bool is_long = strncmp(need_parse, SOB_AP_LFLAG, MIN(lflag_len, need_parse_len)) == 0;                  \
             bool is_file = false;                                                                                   \
@@ -994,7 +1013,6 @@ UNUSED static ArgParser sob_ap = {
                 is_file = true;                                                                                     \
             }                                                                                                       \
             fclose(fp);                                                                                             \
-            LOG_TAG; \
             if (is_short || is_long) {                                                                              \
                 is_arg_name = true;                                                                                 \
                 const char* prefix;                                                                                 \
@@ -1074,7 +1092,7 @@ UNUSED static ArgParser sob_ap = {
         }                                                                                       \
         if (Argc > 1) {                                                                         \
             if (strcmp(Argv[1], "-h") == 0 || strcmp(Argv[1], "--help") == 0) {                 \
-                ArgParser_print();                                                              \
+                ArgParser_print_parser();                                                       \
                 exit(ERROR_NONE);                                                               \
             }                                                                                   \
         }                                                                                       \
@@ -1084,8 +1102,8 @@ UNUSED static ArgParser sob_ap = {
             char* subcmd;                                                                       \
             bool exist = false;                                                                 \
             if (!Argc && !sob_ap.has_global) {                                                  \
-                ArgParser_print();                                                              \
-                ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD);                                     \
+                ArgParser_print_parser();                                                       \
+                ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("all") "` ");         \
                 exit(ERROR_AP_NO_EXIST_SUBCMD);                                                 \
             } else if (Argc && sob_ap.has_global) {                                             \
                 subcmd = Argv[0];                                                               \
@@ -1111,7 +1129,7 @@ UNUSED static ArgParser sob_ap = {
                     }                                                                           \
                 }                                                                               \
                 if (!exist) {                                                                   \
-                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD);                                 \
+                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("%s") "` ", subcmd);                                 \
                     exit(ERROR_AP_NO_EXIST_SUBCMD);                                             \
                 }                                                                               \
             }                                                                                   \
