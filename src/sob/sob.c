@@ -1,7 +1,5 @@
-
 #include "sob.inc"
 #include "sob.h"
-
 
 ArgParser_def_fn(all) {
     printf("Hello World\n");
