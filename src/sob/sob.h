@@ -29,8 +29,10 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-typedef pid_t Pid;
-typedef int Fd;
+typedef pid_t SobPid;
+typedef int SobFd;
+
+#define ERRON_MSG (errno == 0 ? "" : strerror(errno))
 
 #else
 
@@ -40,8 +42,8 @@ typedef int Fd;
 #include "windows.h"
 #include <process.h>
 
-typedef HANDLE Pid;
-typedef HANDLE Fd;
+typedef HANDLE SobPid;
+typedef HANDLE SobFd;
 
 struct dirent {
     char d_name[MAX_PATH+1];
@@ -52,6 +54,8 @@ DIR *opendir(const char *dirpath);
 struct dirent *readdir(DIR *dirp);
 int closedir(DIR *dirp);
 LPSTR GetLastErrorAsString(void);
+
+#define ERRON_MSG (GetLastErrorAsString())
 
 #endif  // _WIN32
 
@@ -91,18 +95,6 @@ extern "C" {
 #define SOB_AP_GLCMD "all"
 
 
-// ==================================================================================== //
-//                                    sob: Platform (PF)
-// ==================================================================================== //
-
-#ifdef __GNUC__
-#define UNUSED __attribute__((unused))
-#define NORETURN __attribute__((noreturn))
-#else
-#define UNUSED
-#define NORETURN
-#endif
-
 
 // ==================================================================================== //
 //                                    sob: Typedef
@@ -111,12 +103,18 @@ extern "C" {
 typedef const char * CStr;
 
 
-
-
 // ==================================================================================== //
 //                                    sob: Func (FN)
 // ==================================================================================== //
 
+
+#ifdef __GNUC__
+#define UNUSED __attribute__((unused))
+#define NORETURN __attribute__((noreturn))
+#else
+#define UNUSED
+#define NORETURN
+#endif
 
 #define ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 
@@ -133,9 +131,11 @@ typedef const char * CStr;
 #define REP8(M, a1, a2, a3, a4, a5, a6, a7, a8) REP7 (M, a1, a2, a3, a4, a5, a6, a7) REP_SEP M (a8)
 #define REP_SEP ,
 
+#define STR(s) #s
 #define CONCAT(a, b) a ## b
 #define CONCAT3(a, b, c) a ## b ## c
 #define CONCAT4(a, b, c, d) a ## b ## c ## d
+
 
 // ==================================================================================== //
 //                                    sob: Args (VA)
@@ -328,6 +328,7 @@ typedef struct {
         ERROR_NONE,
         ERROR_CS_ALLOC_FAIL,
         ERROR_CS_ACCESS_FAIL,
+        ERROR_CS_CHANGE_FAIL,
         ERROR_AP_CMD_CONFLICT,
         ERROR_AP_NO_SUBCMD,
         ERROR_AP_LOST_ARG_VAL,
@@ -345,6 +346,7 @@ UNUSED static LogError sob_log_error[] = {
     { ERROR_NONE                ,  NULL                         },
     { ERROR_CS_ALLOC_FAIL       , "Memory Allocation Failed"    },
     { ERROR_CS_ACCESS_FAIL      , "Memory Access Failed"        },
+    { ERROR_CS_CHANGE_FAIL      , "String Change Failed"        },
     { ERROR_AP_CMD_CONFLICT     , "Command Conflict"            },
     { ERROR_AP_NO_SUBCMD        , "No Sub Command"              },
     { ERROR_AP_LOST_ARG_VAL     , "Lost Arg Value"              },
@@ -379,7 +381,7 @@ UNUSED static Logger sob_logger = {
     ERROR_NONE
 };
 
-#define Log_errno                   (sob_logger.no == ERROR_NONE ? (errno == 0 ? "" : strerror(errno)) : sob_logger.error[sob_logger.no].msg)
+#define Log_errno                   (sob_logger.no == ERROR_NONE ? (ERRON_MSG) : sob_logger.error[sob_logger.no].msg)
 #define Log_msg(level, fmt, ...)                                                   \
     do {                                                                           \
         time_t t = time(NULL);                                                     \
@@ -389,7 +391,9 @@ UNUSED static Logger sob_logger = {
         fprintf(stderr, "%4s " ANSI_RESET, sob_logger.elem[level].name);           \
         fprintf(stderr, _BLACK("%s:%d: "), __FILE__, __LINE__);                    \
         fprintf(stderr, fmt, ##__VA_ARGS__);                                       \
-        fprintf(stderr, _RED(" %s"), Log_errno);                                   \
+        if (level >= 4) {                                                          \
+            fprintf(stderr, _RED(" %s"), Log_errno);                               \
+        }                                                                          \
         fprintf(stderr, "\n");                                                     \
         sob_logger.no = ERROR_NONE;                                                \
     } while (0)
@@ -418,10 +422,10 @@ UNUSED static Logger sob_logger = {
 //                                    sob: CString (CS)
 // ==================================================================================== //
 
-#define CStr_new(S)                     #S
+#define CStr_new(S)                     STR(S)
 #define CStr_len(S)                     strlen(S)
 #define CStr_put(S)                     fprintf(stdout, "%s", S)
-#define CStr_copy(S1, S2)               if ((S1) == NULL) { S1 = malloc(CStr_len(S2) + 1); } strcpy((S1), (S2))
+#define CStr_copy(SD, S)                if ((SD) == NULL) { SD = malloc(CStr_len(S) + 1); } strcpy((SD), (S))
 #define CStr_cat(SD, S1, S2)            char* SD = malloc(CStr_len(S1) + CStr_len(S2) + 1); CStr_copy(SD, S1); strcat(SD, S2)
 #define CStr_is_end(S1, S2)             ((CStr_len(S1) <= CStr_len(S2)) && (strncmp(S1 + CStr_len(S1) - CStr_len(S2), S2, CStr_len(S2)) == 0))
 #define CStr_is_begin(S1, S2)           ((CStr_len(S1) <= CStr_len(S2)) && (strncmp(S1, S2, CStr_len(S2)) == 0))
@@ -461,6 +465,8 @@ UNUSED static Logger sob_logger = {
         }                                             \
     } while (0)
 
+
+
 #define CStrArray_size(SA, N)                     \
     do {                                          \
         N = 0;                                    \
@@ -479,6 +485,14 @@ UNUSED static Logger sob_logger = {
             SA_tmp[i] = CStrArray_get(SA, i);                                                 \
         }                                                                                     \
         SA = SA_tmp;                                                                          \
+    } while (0)
+
+#define CStrArray_free(SA)                                                                 \
+    do {                                                                                   \
+        CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
+        CStrArray_forauto(SA, i, s, free(s));                                              \
+        free(SA);                                                                          \
+        SA = NULL;                                                                         \
     } while (0)
 
 #define CStrArray_join(SA, S, SEP)                                                      \
@@ -530,11 +544,12 @@ UNUSED static Logger sob_logger = {
             char* SAD_tmp;                                                                              \
             CStr SAS_tmp = CStrArray_get(SAS, i);                                                       \
             if (SAS_tmp != NULL) {                                                                      \
-                SAD_tmp = malloc(sizeof(char) * CStr_len(SAS_tmp) + 1);                                 \
+                SAD_tmp = malloc(sizeof(char) * (CStr_len(SAS_tmp) + 1));                               \
                 CStr_copy(SAD_tmp, SAS_tmp);                                                            \
                 CStrArray_ast_no(SAD_tmp != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #SAD); \
             } else {                                                                                    \
                 SAD_tmp = NULL;                                                                         \
+                break;                                                                                  \
             }                                                                                           \
             CStrArray_set(SAD, i, SAD_tmp);                                                             \
         }                                                                                               \
@@ -909,6 +924,102 @@ DSArray_def(DSMap_idx_t)
     }
 
 
+// ==================================================================================== //
+//                                    sob: SysCall (Unix/Windows)                                 //
+// ==================================================================================== //
+
+
+#ifdef _WIN32
+#define RENAME(oldpath, newpath) (MoveFileEx((oldpath), (newpath), MOVEFILE_REPLACE_EXISTING))
+#define IS_DIR(path)                          \
+    ({                                        \
+        DWORD attr = GetFileAttributes(path); \
+        (attr != INVALID_FILE_ATTRIBUTES &&   \
+         attr & FILE_ATTRIBUTE_DIRECTORY);    \
+    })
+
+#define IS_FILE(path)                         \
+    ({                                        \
+        DWORD attr = GetFileAttributes(path); \
+        (attr != INVALID_FILE_ATTRIBUTES &&   \
+         !(attr & FILE_ATTRIBUTE_DIRECTORY)); \
+    })
+
+#define EXIST_PATH(path) (GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES)
+#define MKDIR(...) \
+    do {           \
+        CStr* paths; \
+        CStrArray_new(paths, __VA_ARGS__); \
+        CStrArray_forauto(paths, i, path, { \
+            CreateDirectory(path, NULL); \
+        }); \
+        CStrArray_free(paths); \
+    } while (0)
+
+#else
+
+#define RENAME(oldpath, newpath) (rename((oldpath), (newpath)) >= 0)
+#define IS_DIR(path)                        \
+    ({                                      \
+        struct stat st;                     \
+        stat(path, &st);                    \
+        S_ISDIR(st.st_mode) ? true : false; \
+    })
+
+#define IS_FILE(path)                       \
+    ({                                      \
+        struct stat st;                     \
+        stat(path, &st);                    \
+        S_ISREG(st.st_mode) ? true : false; \
+    })
+
+#define EXIST_PATH(path) (access((path), F_OK) == 0)
+#define MKDIR(...)                          \
+    do {                                    \
+        CStr* paths;                        \
+        CStrArray_new(paths, __VA_ARGS__);  \
+        CStrArray_forauto(paths, i, path, \
+            if (!IS_DIR(path)) {            \
+                if(mkdir(path, 0777) < 0) { \
+                    if(errno == EEXIST) { \
+                        errno = 0; \
+                        Log_warn("mkdir %s exists", path); \
+                    } else { \
+                        Log_err("mkdir %s failed", path); \
+                    } \
+                } else { \
+                    Log_info("mkdir %s success", path); \
+                } \
+            } else { \
+                Log_warn("mkdir %s exists", path); \
+            } \
+        );  \
+    } while (0)
+
+#define RM(...) \
+    do {        \
+        CStr* paths; \
+        CStrArray_new(paths, __VA_ARGS__); \
+        CStrArray_forauto(paths, i, path, { \
+            if(IS_DIR(path)) { \
+                Log_err("TODO: rm dir %s failed", path); \
+            } else { \
+                if(unlink(path) < 0) { \
+                    if(errno == ENOENT) { \
+                        errno = 0; \
+                        Log_warn("rm %s not exists", path); \
+                    } else { \
+                        Log_err("rm %s failed", path); \
+                    } \
+                } else { \
+                    Log_info("rm %s success", path); \
+                } \
+            } \
+        }); \
+    } while (0)
+
+
+#endif  // _WIN32
 
 // ==================================================================================== //
 //                                    sob: Unit Test (UT)
@@ -1365,6 +1476,28 @@ UNUSED static ArgParser sob_ap = {
         _ArgParser_cmd(Argc, Argv);                                                                \
         ArgParser_cur_cmd->fn(argc_copy, argv_copy, Envp);                                         \
     } while (0)
+
+
+// ==================================================================================== //
+//                                    sob: SOB no build (SOB)
+// ==================================================================================== //
+
+
+typedef struct {
+    SobFd read;
+    SobPid write;
+} SobPipe;
+
+
+
+#define Sob_rename(SD, S)               Log_ast(RENAME((SD), (S)), "`" _YELLOW_BD("%s") "`" " to `" _YELLOW_BD("%s") "`", #SD, #S)
+
+SobPipe SobPipe_make();
+SobFd SobFd_open(const char* path, const char* mode);
+void SobFd_close(SobFd fd);
+void SobPid_wait(SobPid pid);
+
+
 
 #ifdef __cplusplus
 }

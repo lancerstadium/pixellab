@@ -35,19 +35,28 @@ int main(int argc, char *argv[], char *envp[]) {
     CStrArray_pushn(cmd2, cmd5);
     CStr mm;
     CStrArray_pop(cmd2, mm);
-    printf("%s\n", mm);
+    printf("mm: %s\n", mm);
 
+    bool b = IS_DIR("./docs");
+    printf("%s\n", b ? "true" : "false");
 
-    char** cmd2_copy;
-    CStrArray_copy(cmd2, cmd2_copy);
-    CStrArray_prefix(cmd2_copy, "-L");
-    CStrArray_forauto(cmd2_copy, i, s,
+    // Sob_rename(mm, "hello");
+
+    /// TODO: CStrArray_copy memory leak
+    // CStr* cmd2_copy;
+    // CStrArray_copy(cmd2, cmd2_copy);
+    // CStrArray_prefix(cmd2_copy, "-L");
+    CStrArray_forauto(cmd2, i, s,
         printf("copy: %s\n", s);
     );
 
     char* cc;
     CStrArray_path(cmd3, cc);
     printf("%s\n", cc);
+
+    MKDIR("demo01", "demo02", "demo03");
+
+    RM("ll");
 
     ArgParser_sys_cmd(cmd1);
     ArgParser_sys_cmd(cmd2);
