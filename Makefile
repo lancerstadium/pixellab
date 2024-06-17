@@ -76,13 +76,17 @@ valgrind:
 log:
 	@tail -n $$(($$(tac test/tests.log | grep -m 1 -n '^───── Run' | cut -d: -f1) + 1)) test/tests.log | sed '/^$$/d'
 
-deploy:
+docs_dev:
+	@npm run docs:dev
+
+docs_deploy:
 	@npm run docs:build
 	@cd docs/.vuepress/dist
 	@git init
 	@git add -A
 	@git commit -m 'deploy'
-	@git push -f https://github.com/$(AUTHOR)/$(APP).git master:gh-pages
+	@git remote add origin https://github.com:$(AUTHOR)/$(APP).git
+	@git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
 
 # The Cleaner
 clean:
