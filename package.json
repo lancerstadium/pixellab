@@ -1,0 +1,21 @@
+{
+  "name": "pixellab",
+  "version": "0.0.6",
+  "description": "Pixel Lab Website",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  },
+  "author": "LancerStadium",
+  "license": "MIT",
+  "devDependencies": {
+    "@vuepress/bundler-vite": "^2.0.0-rc.13",
+    "@vuepress/theme-default": "^2.0.0-rc.35",
+    "vuepress": "^2.0.0-rc.13"
+  }
+}
