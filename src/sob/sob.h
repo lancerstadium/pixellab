@@ -519,7 +519,7 @@ UNUSED static Logger sob_logger = {
         S = malloc(m);                                                                  \
         ArgParser_ast_no(S != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #S); \
         char* S_copy = S;                                                               \
-        for (int i = 0; i < n; i++) {                                                   \
+        for (size_t i = 0; i < n; i++) {                                                \
             if (i > 0) {                                                                \
                 m += CStr_len(SEP) + CStr_len(SA[i]);                                   \
                 S_copy = realloc(S, m);                                                 \
