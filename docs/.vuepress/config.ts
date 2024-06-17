@@ -5,8 +5,8 @@ export default defineUserConfig({
   base: "/pixellab/",
 
   lang: "zh-CN",
-  title: "文档演示",
-  description: "vuepress-theme-hope 的文档演示",
+  title: "Pixel Lab",
+  description: "Pixel Lab Website",
 
   theme,
 
