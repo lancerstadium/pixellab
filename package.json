@@ -2,20 +2,18 @@
   "name": "pixellab",
   "version": "0.0.8",
   "description": "Pixel Lab Website",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs",
-    "test": "test"
-  },
-  "scripts": {
-    "docs:dev": "vuepress dev docs",
-    "docs:build": "vuepress build docs"
-  },
-  "author": "LancerStadium",
   "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "docs:build": "vuepress-vite build docs",
+    "docs:clean-dev": "vuepress-vite dev docs --clean-cache",
+    "docs:dev": "vuepress-vite dev docs",
+    "docs:update-package": "npx vp-update"
+  },
   "devDependencies": {
-    "@vuepress/bundler-vite": "^2.0.0-rc.13",
-    "@vuepress/theme-default": "^2.0.0-rc.35",
-    "vuepress": "^2.0.0-rc.13"
+    "@vuepress/bundler-vite": "2.0.0-rc.13",
+    "vue": "^3.4.27",
+    "vuepress": "2.0.0-rc.13",
+    "vuepress-theme-hope": "2.0.0-rc.48"
   }
 }

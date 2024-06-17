@@ -8,3 +8,12 @@ node_modules
 docs/.vuepress/.temp
 docs/.vuepress/.cache
 docs/.vuepress/dist
+node_modules/
+docss/.vuepress/.cache/
+docss/.vuepress/.temp/
+docss/.vuepress/dist/
+
+node_modules/
+docs/.vuepress/.cache/
+docs/.vuepress/.temp/
+docs/.vuepress/dist/

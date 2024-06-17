@@ -100,7 +100,7 @@ install: all
 	install -d $(DESTDIR)/$(PREFIX)/lib/
 	install $(TARGET) $(DESTDIR)/$(PREFIX)/lib/
 
-commit: docs_deploy
+commit:
 	git add .
 	git commit -m "$(shell date)"
 	git push
