@@ -40,6 +40,8 @@ int main(int argc, char *argv[], char *envp[]) {
     bool b = IS_DIR("./docs");
     printf("%s\n", b ? "true" : "false");
 
+    CMD("echo", "nihao");
+
     // Sob_rename(mm, "hello");
 
     /// TODO: CStrArray_copy memory leak
@@ -58,6 +60,8 @@ int main(int argc, char *argv[], char *envp[]) {
     MKDIR("demo01", "demo02", "demo03");
 
     RM("demo01", "demo02", "demo03");
+
+    
 
     // printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
 

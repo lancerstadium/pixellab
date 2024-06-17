@@ -338,11 +338,12 @@ static LogElem sob_log_elem[] = {
 
 typedef struct {
     enum {
-        ERROR_NONE,
+        ERROR_SOB_NONE,
         ERROR_CS_ALLOC_FAIL,
         ERROR_CS_ACCESS_FAIL,
         ERROR_CS_CHANGE_FAIL,
         ERROR_SYS_STAT_FAIL,
+        ERROR_SYS_EXEC_FAIL,
         ERROR_AP_CMD_CONFLICT,
         ERROR_AP_NO_SUBCMD,
         ERROR_AP_LOST_ARG_VAL,
@@ -357,11 +358,12 @@ typedef struct {
 } LogError;
 
 UNUSED static LogError sob_log_error[] = {
-    { ERROR_NONE                ,  NULL                         },
+    { ERROR_SOB_NONE            ,  NULL                         },
     { ERROR_CS_ALLOC_FAIL       , "Memory Allocation Failed"    },
     { ERROR_CS_ACCESS_FAIL      , "Memory Access Failed"        },
     { ERROR_CS_CHANGE_FAIL      , "String Change Failed"        },
     { ERROR_SYS_STAT_FAIL       , "Path Stat Failed"            },
+    { ERROR_SYS_EXEC_FAIL       , "Command Exec Failed"         },
     { ERROR_AP_CMD_CONFLICT     , "Command Conflict"            },
     { ERROR_AP_NO_SUBCMD        , "No Sub Command"              },
     { ERROR_AP_LOST_ARG_VAL     , "Lost Arg Value"              },
@@ -393,10 +395,10 @@ UNUSED static Logger sob_logger = {
     &LogPos_init(), 
     sob_log_elem,
     sob_log_error,
-    ERROR_NONE
+    ERROR_SOB_NONE
 };
 
-#define Log_errno                   (sob_logger.no == ERROR_NONE ? (ERRON_MSG) : sob_logger.error[sob_logger.no].msg)
+#define Log_errno                   (sob_logger.no == ERROR_SOB_NONE ? (ERRON_MSG) : sob_logger.error[sob_logger.no].msg)
 #define Log_msg(level, fmt, ...)                                                   \
     do {                                                                           \
         time_t t = time(NULL);                                                     \
@@ -410,7 +412,7 @@ UNUSED static Logger sob_logger = {
             fprintf(stderr, _RED(" %s"), Log_errno);                               \
         }                                                                          \
         fprintf(stderr, "\n");                                                     \
-        sob_logger.no = ERROR_NONE;                                                \
+        sob_logger.no = ERROR_SOB_NONE;                                                \
     } while (0)
 
 #define Log_trace(...)              Log_msg(LOGLEVEL_TRAC, ##__VA_ARGS__)
@@ -426,7 +428,7 @@ UNUSED static Logger sob_logger = {
 #define Log_err_no(N, ...)          sob_logger.no = N; Log_err(__VA_ARGS__)
 #define Log_fatal(...)              Log_msg(5, ##__VA_ARGS__)
 #define Log_ast(expr, ...)          if (!(expr)) { Log_msg(LOGLEVEL_ASST, ##__VA_ARGS__); exit(-1); }
-#define Log_ast_no(expr, N, ...)    if (!(expr)) { sob_logger.no = N; Log_msg(LOGLEVEL_ASST, ##__VA_ARGS__); exit(-1); }
+#define Log_ast_no(expr, N, ...)    if (!(expr)) { sob_logger.no = N; Log_msg(LOGLEVEL_ASST, ##__VA_ARGS__); exit(N); }
 #define Log_check(A, M, ...)        if(!(A)) { Log_err(M, ##__VA_ARGS__); errno=0; goto error; }
 #define Log_check_mem(A)            Log_check((A), "Out of memory.")
 #define Log_sentinel(M, ...)        { Log_err(M, ##__VA_ARGS__); errno=0; goto error; }
@@ -613,6 +615,7 @@ UNUSED static Logger sob_logger = {
         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
         CStrArray_join(SA, S, PATH_SEP);                                                   \
     } while (0)
+
 
 // ==================================================================================== //
 //                                    sob: Data Struct (DS)
@@ -944,6 +947,11 @@ DSArray_def(DSMap_idx_t)
 //                                    sob: SysCall (Unix/Windows)                                 //
 // ==================================================================================== //
 
+typedef struct {
+    SobFd read;
+    SobPid write;
+} SobPipe;
+
 
 #ifdef _WIN32
 #define RENAME(oldpath, newpath) (MoveFileEx((oldpath), (newpath), MOVEFILE_REPLACE_EXISTING))
@@ -1060,6 +1068,27 @@ DSArray_def(DSMap_idx_t)
         Log_ast_no(stat(path2, &st2) >= 0, ERROR_SYS_STAT_FAIL, "`" _YELLOW_BD("%s") "`", path2); \
         st1.st_mtime > st2.st_mtime;                                                              \
     })
+
+#define WAIT(PID)                 \
+    do {                          \
+        int status;               \
+        Log_ast(waitpid(PID, &status, 0) >= 0, "`" _YELLOW_BD("%d") "`", PID); \
+        Log_ast(!WIFEXITED(status) || WEXITSTATUS(status) == 0, "`" _YELLOW_BD("%d") "`", status); \
+        Log_ast(!WIFSIGNALED(status) , "`" _YELLOW_BD("%d") "`", status); \
+    } while (0)
+
+// Use execvp()
+#define CMD(...)                                                                         \
+    do {                                                                                 \
+        CStr* cmd;                                                                       \
+        CStrArray_new(cmd, __VA_ARGS__);                                                 \
+        CStr prog = CStrArray_get(cmd, 0);                                               \
+        Log_sysc(_BLUE_UL("%s"), prog);                                                  \
+        SobPid cpid = fork();                                                            \
+        Log_ast(cpid >= 0, "`" _YELLOW_BD("%s") "`", prog);                              \
+        Log_ast((execvp(prog, (char* const*)cmd) == 0), "`" _YELLOW_BD("%s") "`", prog); \
+        WAIT(cpid);                                                                      \
+    } while (0)
 
 #endif  // _WIN32
 
@@ -1367,7 +1396,7 @@ UNUSED static ArgParser sob_ap = {
         if (Argc > 0) {                                                                                 \
             if (strcmp(Argv[0], "-h") == 0 || strcmp(Argv[0], "--help") == 0) {                         \
                 ArgParser_print_command();                                                              \
-                exit(ERROR_NONE);                                                                       \
+                exit(ERROR_SOB_NONE);                                                                   \
             }                                                                                           \
         }                                                                                               \
         bool is_arg_name = true;                                                                        \
@@ -1467,7 +1496,7 @@ UNUSED static ArgParser sob_ap = {
         if (Argc > 1) {                                                                            \
             if (strcmp(Argv[1], "-h") == 0 || strcmp(Argv[1], "--help") == 0) {                    \
                 ArgParser_print_parser();                                                          \
-                exit(ERROR_NONE);                                                                  \
+                exit(ERROR_SOB_NONE);                                                              \
             }                                                                                      \
         }                                                                                          \
         Argc--;                                                                                    \
@@ -1518,26 +1547,6 @@ UNUSED static ArgParser sob_ap = {
         _ArgParser_cmd(Argc, Argv);                                                                \
         ArgParser_cur_cmd->fn(argc_copy, argv_copy, Envp);                                         \
     } while (0)
-
-
-// ==================================================================================== //
-//                                    sob: SOB no build (SOB)
-// ==================================================================================== //
-
-
-typedef struct {
-    SobFd read;
-    SobPid write;
-} SobPipe;
-
-
-
-#define Sob_rename(SD, S)               Log_ast(RENAME((SD), (S)), "`" _YELLOW_BD("%s") "`" " to `" _YELLOW_BD("%s") "`", #SD, #S)
-
-SobPipe SobPipe_make();
-SobFd SobFd_open(const char* path, const char* mode);
-void SobFd_close(SobFd fd);
-void SobPid_wait(SobPid pid);
 
 
 

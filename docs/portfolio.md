@@ -4,7 +4,7 @@ portfolio: true
 title: 档案主页
 icon: home
 welcome: 👋 你好，我是
-name: 江户川柯南
+name: Lancerstadium
 avatar: https://theme-hope-assets.vuejs.press/hero/conan.png
 
 titles:
