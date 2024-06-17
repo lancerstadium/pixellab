@@ -85,7 +85,7 @@ docs_deploy:
 	&& git init \
 	&& git add . \
 	&& git commit -m 'deploy' \
-	&& git branch -M main \
+	&& git branch -m main \
 	&& git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
 
 # The Cleaner
