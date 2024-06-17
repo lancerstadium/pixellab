@@ -85,6 +85,7 @@ docs_deploy:
 	&& git init \
 	&& git add . \
 	&& git commit -m 'deploy' \
+	&& git branch -M main \
 	&& git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
 
 # The Cleaner
@@ -99,7 +100,7 @@ install: all
 	install -d $(DESTDIR)/$(PREFIX)/lib/
 	install $(TARGET) $(DESTDIR)/$(PREFIX)/lib/
 
-commit:
+commit: docs_deploy
 	git add .
 	git commit -m "$(shell date)"
 	git push

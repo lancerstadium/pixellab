@@ -9,5 +9,6 @@ export default defineUserConfig({
 
     lang: 'zh-CN',
     title: 'Pixel Lab',
+    base: '/pixellab/',
     description: 'Pixel Lab Website',
 })
