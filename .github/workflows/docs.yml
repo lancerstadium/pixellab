@@ -22,6 +22,14 @@ jobs:
         with:
           # 选择要使用的 node 版本
           node-version: 20
+      
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       # 运行构建脚本
       - name: Build VuePress site
