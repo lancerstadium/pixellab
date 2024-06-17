@@ -517,7 +517,7 @@ UNUSED static Logger sob_logger = {
     do {                                                                                \
         size_t n = 0;                                                                   \
         CStrArray_size(SA, n);                                                          \
-        size_t m = CStr_len(SEP) + 1;                                                   \
+        size_t m = 1;                                                                   \
         S = malloc(m);                                                                  \
         ArgParser_ast_no(S != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #S); \
         char* S_copy = S;                                                               \
@@ -1013,9 +1013,21 @@ typedef struct {
                         Log_err("mkdir %s failed", path);   \
                     }                                       \
                 } else {                                    \
-                    Log_info("mkdir %s success", path);     \
+                    Log_info(_GREEN_BD("+") " %s", path);   \
                 }                                           \
             } else { Log_warn("mkdir %s exists", path); }); \
+    } while (0)
+
+#define TOUCH(...)                                      \
+    do {                                                \
+        CStr* paths;                                    \
+        CStrArray_new(paths, __VA_ARGS__);              \
+        CStrArray_forauto(paths, i, path,               \
+            FILE* f = fopen(path, "w");                 \
+            Log_ast(f != NULL, "touch %s fail", path);  \
+            fclose(f);                                  \
+            Log_info(_GREEN_BD("+") " %s", path);       \
+        );                                              \
     } while (0)
 
 #define ECHO(...)                                           \
@@ -1044,7 +1056,7 @@ typedef struct {
                         Log_err("rm %s failed", path);      \
                     }                                       \
                 } else {                                    \
-                    Log_info("rm %s success", path);        \
+                    Log_info(_RED_BD("-") " %s", path);     \
                 }                                           \
             } else {                                        \
                 if (unlink(path) < 0) {                     \
@@ -1055,7 +1067,7 @@ typedef struct {
                         Log_err("rm %s failed", path);      \
                     }                                       \
                 } else {                                    \
-                    Log_info("rm %s success", path);        \
+                    Log_info(_RED_BD("-") " %s", path);     \
                 }                                           \
             }                                               \
         });                                                 \
@@ -1091,11 +1103,27 @@ typedef struct {
         }                                                           \
     } while (0)
 
-#define EXEC(...) \
-    do { \
-        CStr* cmd;                                                  \
-        CStrArray_new(cmd, __VA_ARGS__);                            \
-        CMD(cmd);                                                   \
+#define EXEC(...)                        \
+    do {                                 \
+        CStr* cmd;                       \
+        CStrArray_new(cmd, __VA_ARGS__); \
+        CMD(cmd);                        \
+    } while (0)
+
+#define LIST_FILES(PATH, SA)                             \
+    do {                                                 \
+        CStrArray_new(SA, NULL);                         \
+        DIR* dir;                                        \
+        struct dirent* entry;                            \
+        if (IS_DIR(PATH)) {                              \
+            dir = opendir(PATH);                         \
+            if (dir) {                                   \
+                while ((entry = readdir(dir)) != NULL) { \
+                    CStrArray_push(SA, entry->d_name);   \
+                }                                        \
+                closedir(dir);                           \
+            }                                            \
+        }                                                \
     } while (0)
 
 #endif  // _WIN32
@@ -1103,6 +1131,8 @@ typedef struct {
 // ==================================================================================== //
 //                                    sob: Unit Test (UT)
 // ==================================================================================== //
+
+typedef char* (*UnitTest_fn) ();
 
 typedef struct {
     int n_test;                         /* number of tests */
@@ -1134,6 +1164,7 @@ UNUSED static UnitTest sob_ut = {
     .t_tot = 0
 };
 
+#define UnitTest_fn_def(name)           char* name()
 #define _UT_NRES(res)                   sob_ut.n_test++; ((res == NULL) ? (sob_ut.n_pass++) : (sob_ut.n_fail++))
 #define _UT_SRES(res)                   ((res == NULL) ? _GREEN("PASS") : _RED("FAIL"))
 #define _UT_TSTART()                    clock_gettime(CLOCK_MONOTONIC, &sob_ut.t_s);
@@ -1323,7 +1354,15 @@ UNUSED static ArgParser sob_ap = {
         sob_ap.n_cmd++;                                                                   \
     } while (0)
 
-#define ArgParser_sys_cmd(SA)                                                                \
+
+#define ArgParser_sys_cmd(...)           \
+    do {                                 \
+        CStr* cmd;                       \
+        CStrArray_new(cmd, __VA_ARGS__); \
+        ArgParser_sys_CMD(cmd);          \
+    } while (0)
+
+#define ArgParser_sys_CMD(SA)                                                                \
     do {                                                                                     \
         ArgParser_ast_no(sob_ap.n_cmd < SOB_AP_MSCMD, ERROR_AP_OVER_SUBCMD);                 \
         ArgParser_ast_no((SA) != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \

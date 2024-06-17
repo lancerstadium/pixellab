@@ -12,6 +12,10 @@ ArgParser_def_fn(hello) {
     printf("Hello World\n");
 }
 
+ArgParser_def_fn(test) {
+    printf(_WHITE_BD_UL("Running Unit Tests:") "\n");
+}
+
 ArgParser_def_args(default_args) = {
     ArgParser_arg_INPUT,
     ArgParser_arg_OUTPUT,
@@ -22,7 +26,8 @@ int main(int argc, char *argv[], char *envp[]) {
 
     ArgParser_init("Sob - Super Nobuild Toolkit with only .h file", NULL);
     ArgParser_use_cmd(NULL, "run all" , "This is usage", all  , default_args);
-    ArgParser_use_cmd(NULL, "run test", "This is usage", hello, default_args);
+    ArgParser_use_cmd(NULL, "run hello", "This is usage", hello, default_args);
+    ArgParser_use_cmd(NULL, "run test", "This is usage", test , default_args);
     
     CStr* cmd1, *cmd2, *cmd3;
     CStr* cmd4;
@@ -42,33 +47,44 @@ int main(int argc, char *argv[], char *envp[]) {
 
     EXEC("echo", "nihao");
 
+    CStr* files;
+    LIST_FILES("./", files);
+    CStrArray_forauto(files, i, file, {
+        printf("- %s\n", file);
+    });
+
     // Sob_rename(mm, "hello");
 
     /// TODO: CStrArray_copy memory leak
     // CStr* cmd2_copy;
     // CStrArray_copy(cmd2, cmd2_copy);
     // CStrArray_prefix(cmd2_copy, "-L");
-    CStrArray_forauto(cmd2, i, s,
-        printf("copy: %s\n", s);
-    );
+    // CStrArray_forauto(cmd2, i, s,
+    //     printf("copy: %s\n", s);
+    // );
 
-    char* cc;
-    CStrArray_path(cmd3, cc);
-    printf("%s\n", cc);
+    /// TODO: CStrArray_join memory leak
+    // char* cc;
+    // CStrArray_path(cmd2, cc);
+    // printf("%s\n", cc);
+    // CStrArray_join(cmd2, cc, ",");
+    // printf("%s\n", cc);
 
     ECHO("hello", "world", _BLUE("Machine"));
-    MKDIR("demo01", "demo02", "demo03");
 
+    MKDIR("demo01", "demo02", "demo03");
     RM("demo01", "demo02", "demo03");
 
-    
+    TOUCH("demo01.txt", "demo02.txt", "demo03.txt");
+    RM("demo01.txt", "demo02.txt", "demo03.txt");
+
 
     // printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
 
-    ArgParser_sys_cmd(cmd1);
-    ArgParser_sys_cmd(cmd2);
-    ArgParser_sys_cmd(cmd3);
-    ArgParser_sys_cmd(cmd4);
+    ArgParser_sys_cmd("uname", "-a");
+    ArgParser_sys_cmd("ls", "-l");
+    ArgParser_sys_cmd("perf", "record", "-e", "cycles", "-F", "999", "ls", "-l");
+    ArgParser_sys_cmd("echo", "nihao");
 
     ArgParser_run(argc, argv, envp);
     return 0;

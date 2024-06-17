@@ -20,7 +20,7 @@ unsigned int destroyState1() {
 }
 
 
-char* test_loop() {
+UnitTest_fn_def(test_loop) {
 
     Engine *eng;
 
@@ -55,7 +55,7 @@ char* test_loop() {
     return NULL;
 }
 
-char *all_tests() {
+UnitTest_fn_def(all_tests) {
 
     // UnitTest_add(test_loop);
 
