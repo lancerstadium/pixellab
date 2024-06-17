@@ -1,5 +1,6 @@
 CC = gcc
 APP = pixellab
+AUTHOR = lancerstadium
 INCDIR = src
 SRCDIR = src
 BINDIR = bin
@@ -74,6 +75,14 @@ valgrind:
 
 log:
 	@tail -n $$(($$(tac test/tests.log | grep -m 1 -n '^───── Run' | cut -d: -f1) + 1)) test/tests.log | sed '/^$$/d'
+
+deploy:
+	@npm run docs:build
+	@cd docs/.vuepress/dist
+	@git init
+	@git add -A
+	@git commit -m 'deploy'
+	@git push -f https://github.com/$(AUTHOR)/$(APP).git master:gh-pages
 
 # The Cleaner
 clean:
