@@ -311,18 +311,29 @@ typedef const char * CStr;
 // ==================================================================================== //
 
 typedef struct {
+    enum {
+        LOGLEVEL_TRAC, 
+        LOGLEVEL_SYSC, 
+        LOGLEVEL_DEBU,  
+        LOGLEVEL_INFO,  
+        LOGLEVEL_WARN,  
+        LOGLEVEL_ERRO,  
+        LOGLEVEL_FATA,  
+        LOGLEVEL_ASST
+    } level;
     const char* name;
     const char* color;
 } LogElem;
 
 static LogElem sob_log_elem[] = {
-    { "TRAC", ANSI_FGB_BLUE   },
-    { "DEBU", ANSI_FG_CYAN    },
-    { "INFO", ANSI_FGB_GREEN  },
-    { "WARN", ANSI_FGB_YELLOW },
-    { "ERRO", ANSI_FGB_RED    },
-    { "FATA", ANSI_FGB_RED    },
-    { "ASST", ANSI_FG_MAGENTA }
+    { LOGLEVEL_TRAC, "TRAC", ANSI_FGB_BLUE          },
+    { LOGLEVEL_SYSC, "SYSC", ANSI_BG_BLUE ANSI_BOLD },
+    { LOGLEVEL_DEBU, "DEBU", ANSI_FG_CYAN           },
+    { LOGLEVEL_INFO, "INFO", ANSI_FGB_GREEN         },
+    { LOGLEVEL_WARN, "WARN", ANSI_FGB_YELLOW        },
+    { LOGLEVEL_ERRO, "ERRO", ANSI_FGB_RED           },
+    { LOGLEVEL_FATA, "FATA", ANSI_FGB_RED           },
+    { LOGLEVEL_ASST, "ASST", ANSI_FG_MAGENTA        }
 };
 
 typedef struct {
@@ -392,29 +403,30 @@ UNUSED static Logger sob_logger = {
         struct tm* tm = localtime(&t);                                             \
         fprintf(stderr, "[%02d:%02d:%02d] ", tm->tm_hour, tm->tm_min, tm->tm_sec); \
         fprintf(stderr, "%s", sob_logger.elem[level].color);                       \
-        fprintf(stderr, "%4s " ANSI_RESET, sob_logger.elem[level].name);           \
-        fprintf(stderr, _BLACK("%s:%d: "), __FILE__, __LINE__);                    \
+        fprintf(stderr, "%4s" ANSI_RESET, sob_logger.elem[level].name);            \
+        fprintf(stderr, _BLACK(" %s:%d: "), __FILE__, __LINE__);                   \
         fprintf(stderr, fmt, ##__VA_ARGS__);                                       \
-        if (level >= 4) {                                                          \
+        if (level >= LOGLEVEL_ERRO) {                                              \
             fprintf(stderr, _RED(" %s"), Log_errno);                               \
         }                                                                          \
         fprintf(stderr, "\n");                                                     \
         sob_logger.no = ERROR_NONE;                                                \
     } while (0)
 
-#define Log_trace(...)              Log_msg(0, ##__VA_ARGS__)
+#define Log_trace(...)              Log_msg(LOGLEVEL_TRAC, ##__VA_ARGS__)
+#define Log_sysc(...)               Log_msg(LOGLEVEL_SYSC, ##__VA_ARGS__)
 #ifdef SOB_LOG_DBG_OFF
-#define Log_dbg(...)                Log_msg(1, ##__VA_ARGS__)
+#define Log_dbg(...)                Log_msg(LOGLEVEL_DEBU, ##__VA_ARGS__)
 #else
 #define Log_dbg(...)
 #endif
-#define Log_info(...)               Log_msg(2, ##__VA_ARGS__)
-#define Log_warn(...)               Log_msg(3, ##__VA_ARGS__)
-#define Log_err(...)                Log_msg(4, ##__VA_ARGS__)
+#define Log_info(...)               Log_msg(LOGLEVEL_INFO, ##__VA_ARGS__)
+#define Log_warn(...)               Log_msg(LOGLEVEL_WARN, ##__VA_ARGS__)
+#define Log_err(...)                Log_msg(LOGLEVEL_ERRO, ##__VA_ARGS__)
 #define Log_err_no(N, ...)          sob_logger.no = N; Log_err(__VA_ARGS__)
 #define Log_fatal(...)              Log_msg(5, ##__VA_ARGS__)
-#define Log_ast(expr, ...)          if (!(expr)) { Log_msg(6, ##__VA_ARGS__); exit(-1); }
-#define Log_ast_no(expr, N, ...)    if (!(expr)) { sob_logger.no = N; Log_msg(6, ##__VA_ARGS__); exit(-1); }
+#define Log_ast(expr, ...)          if (!(expr)) { Log_msg(LOGLEVEL_ASST, ##__VA_ARGS__); exit(-1); }
+#define Log_ast_no(expr, N, ...)    if (!(expr)) { sob_logger.no = N; Log_msg(LOGLEVEL_ASST, ##__VA_ARGS__); exit(-1); }
 #define Log_check(A, M, ...)        if(!(A)) { Log_err(M, ##__VA_ARGS__); errno=0; goto error; }
 #define Log_check_mem(A)            Log_check((A), "Out of memory.")
 #define Log_sentinel(M, ...)        { Log_err(M, ##__VA_ARGS__); errno=0; goto error; }
@@ -980,6 +992,7 @@ DSArray_def(DSMap_idx_t)
 #define EXIST_PATH(path) (access((path), F_OK) == 0)
 #define MKDIR(...)                                          \
     do {                                                    \
+        Log_sysc(_BLUE_UL("mkdir"));                        \
         CStr* paths;                                        \
         CStrArray_new(paths, __VA_ARGS__);                  \
         CStrArray_forauto(paths, i, path,                   \
@@ -999,6 +1012,7 @@ DSArray_def(DSMap_idx_t)
 
 #define ECHO(...)                           \
     do {                                    \
+        Log_sysc(_BLUE_UL("echo"));         \
         CStr* paths;                        \
         CStrArray_new(paths, __VA_ARGS__);  \
         CStrArray_forauto(paths, i, path, { \
@@ -1009,11 +1023,21 @@ DSArray_def(DSMap_idx_t)
 
 #define RM(...)                                             \
     do {                                                    \
+        Log_sysc(_BLUE_UL("rm"));                           \
         CStr* paths;                                        \
         CStrArray_new(paths, __VA_ARGS__);                  \
         CStrArray_forauto(paths, i, path, {                 \
             if (IS_DIR(path)) {                             \
-                Log_err("TODO: rm %s failed", path);        \
+                if (rmdir(path) < 0) {                      \
+                    if (errno == ENOENT) {                  \
+                        errno = 0;                          \
+                        Log_warn("rm %s not exists", path); \
+                    } else {                                \
+                        Log_err("rm %s failed", path);      \
+                    }                                       \
+                } else {                                    \
+                    Log_info("rm %s success", path);        \
+                }                                           \
             } else {                                        \
                 if (unlink(path) < 0) {                     \
                     if (errno == ENOENT) {                  \
