@@ -85,7 +85,6 @@ docs_deploy:
 	@git init
 	@git add -A
 	@git commit -m 'deploy'
-	@git remote add origin https://github.com:$(AUTHOR)/$(APP).git
 	@git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
 
 # The Cleaner
