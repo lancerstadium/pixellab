@@ -54,9 +54,12 @@ int main(int argc, char *argv[], char *envp[]) {
     CStrArray_path(cmd3, cc);
     printf("%s\n", cc);
 
+    ECHO("hello", "world", _BLUE("Machine"));
     MKDIR("demo01", "demo02", "demo03");
 
     RM("ll");
+
+    printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
 
     ArgParser_sys_cmd(cmd1);
     ArgParser_sys_cmd(cmd2);

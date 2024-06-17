@@ -135,6 +135,8 @@ typedef const char * CStr;
 #define CONCAT(a, b) a ## b
 #define CONCAT3(a, b, c) a ## b ## c
 #define CONCAT4(a, b, c, d) a ## b ## c ## d
+#define STR_BOOL(b) ((b) ? "true" : "false")
+#define STR_FMT(SD, fmt, ...) sprintf(SD, fmt, __VA_ARGS__)
 
 
 // ==================================================================================== //
@@ -329,6 +331,7 @@ typedef struct {
         ERROR_CS_ALLOC_FAIL,
         ERROR_CS_ACCESS_FAIL,
         ERROR_CS_CHANGE_FAIL,
+        ERROR_SYS_STAT_FAIL,
         ERROR_AP_CMD_CONFLICT,
         ERROR_AP_NO_SUBCMD,
         ERROR_AP_LOST_ARG_VAL,
@@ -347,6 +350,7 @@ UNUSED static LogError sob_log_error[] = {
     { ERROR_CS_ALLOC_FAIL       , "Memory Allocation Failed"    },
     { ERROR_CS_ACCESS_FAIL      , "Memory Access Failed"        },
     { ERROR_CS_CHANGE_FAIL      , "String Change Failed"        },
+    { ERROR_SYS_STAT_FAIL       , "Path Stat Failed"            },
     { ERROR_AP_CMD_CONFLICT     , "Command Conflict"            },
     { ERROR_AP_NO_SUBCMD        , "No Sub Command"              },
     { ERROR_AP_LOST_ARG_VAL     , "Lost Arg Value"              },
@@ -993,6 +997,16 @@ DSArray_def(DSMap_idx_t)
             } else { Log_warn("mkdir %s exists", path); }); \
     } while (0)
 
+#define ECHO(...)                           \
+    do {                                    \
+        CStr* paths;                        \
+        CStrArray_new(paths, __VA_ARGS__);  \
+        CStrArray_forauto(paths, i, path, { \
+            fprintf(stdout, "%s ", path);   \
+        });                                 \
+        fprintf(stdout, "\n");              \
+    } while (0)
+
 #define RM(...)                                             \
     do {                                                    \
         CStr* paths;                                        \
@@ -1014,6 +1028,14 @@ DSArray_def(DSMap_idx_t)
             }                                               \
         });                                                 \
     } while (0)
+
+#define IS_MODIFIED_AFTER(path1, path2)                                                           \
+    ({                                                                                            \
+        struct stat st1, st2;                                                                     \
+        Log_ast_no(stat(path1, &st1) >= 0, ERROR_SYS_STAT_FAIL, "`" _YELLOW_BD("%s") "`", path1); \
+        Log_ast_no(stat(path2, &st2) >= 0, ERROR_SYS_STAT_FAIL, "`" _YELLOW_BD("%s") "`", path2); \
+        st1.st_mtime > st2.st_mtime;                                                              \
+    })
 
 #endif  // _WIN32
 
