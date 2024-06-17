@@ -57,9 +57,9 @@ int main(int argc, char *argv[], char *envp[]) {
     ECHO("hello", "world", _BLUE("Machine"));
     MKDIR("demo01", "demo02", "demo03");
 
-    RM("ll");
+    RM("demo01", "demo02", "demo03");
 
-    printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
+    // printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
 
     ArgParser_sys_cmd(cmd1);
     ArgParser_sys_cmd(cmd2);

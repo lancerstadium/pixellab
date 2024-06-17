@@ -1,4 +1,10 @@
 .vscode/
 build/
 *.o
-./sob
+/sob
+package-lock.json
+pnpm-lock.yaml
+node_modules
+docs/.vuepress/.temp
+docs/.vuepress/.cache
+docs/.vuepress/dist
