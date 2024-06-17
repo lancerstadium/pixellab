@@ -27,7 +27,7 @@ int main(int argc, char *argv[], char *envp[]) {
     CStr* cmd1, *cmd2, *cmd3;
     CStr* cmd4;
     CStr* cmd5 = (CStr[]) {"AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH", NULL};
-    CStrArray_new(cmd1, "uname", "-a", "help");
+    CStrArray_new(cmd1, "uname", "-a");
     CStrArray_new(cmd2, "ls", "-l");
     CStrArray_new(cmd3, "make", "all");
     CStrArray_new(cmd4, "make", "clean", "watermelon");
@@ -40,7 +40,7 @@ int main(int argc, char *argv[], char *envp[]) {
     bool b = IS_DIR("./docs");
     printf("%s\n", b ? "true" : "false");
 
-    CMD("echo", "nihao");
+    EXEC("echo", "nihao");
 
     // Sob_rename(mm, "hello");
 
