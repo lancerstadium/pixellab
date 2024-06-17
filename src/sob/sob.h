@@ -974,50 +974,46 @@ DSArray_def(DSMap_idx_t)
     })
 
 #define EXIST_PATH(path) (access((path), F_OK) == 0)
-#define MKDIR(...)                          \
-    do {                                    \
-        CStr* paths;                        \
-        CStrArray_new(paths, __VA_ARGS__);  \
-        CStrArray_forauto(paths, i, path, \
-            if (!IS_DIR(path)) {            \
-                if(mkdir(path, 0777) < 0) { \
-                    if(errno == EEXIST) { \
-                        errno = 0; \
-                        Log_warn("mkdir %s exists", path); \
-                    } else { \
-                        Log_err("mkdir %s failed", path); \
-                    } \
-                } else { \
-                    Log_info("mkdir %s success", path); \
-                } \
-            } else { \
-                Log_warn("mkdir %s exists", path); \
-            } \
-        );  \
+#define MKDIR(...)                                          \
+    do {                                                    \
+        CStr* paths;                                        \
+        CStrArray_new(paths, __VA_ARGS__);                  \
+        CStrArray_forauto(paths, i, path,                   \
+            if (!IS_DIR(path)) {                            \
+                if(mkdir(path, 0777) < 0) {                 \
+                    if(errno == EEXIST) {                   \
+                        errno = 0;                          \
+                        Log_warn("mkdir %s exists", path);  \
+                    } else {                                \
+                        Log_err("mkdir %s failed", path);   \
+                    }                                       \
+                } else {                                    \
+                    Log_info("mkdir %s success", path);     \
+                }                                           \
+            } else { Log_warn("mkdir %s exists", path); }); \
     } while (0)
 
-#define RM(...) \
-    do {        \
-        CStr* paths; \
-        CStrArray_new(paths, __VA_ARGS__); \
-        CStrArray_forauto(paths, i, path, { \
-            if(IS_DIR(path)) { \
-                Log_err("TODO: rm dir %s failed", path); \
-            } else { \
-                if(unlink(path) < 0) { \
-                    if(errno == ENOENT) { \
-                        errno = 0; \
+#define RM(...)                                             \
+    do {                                                    \
+        CStr* paths;                                        \
+        CStrArray_new(paths, __VA_ARGS__);                  \
+        CStrArray_forauto(paths, i, path, {                 \
+            if (IS_DIR(path)) {                             \
+                Log_err("TODO: rm %s failed", path);        \
+            } else {                                        \
+                if (unlink(path) < 0) {                     \
+                    if (errno == ENOENT) {                  \
+                        errno = 0;                          \
                         Log_warn("rm %s not exists", path); \
-                    } else { \
-                        Log_err("rm %s failed", path); \
-                    } \
-                } else { \
-                    Log_info("rm %s success", path); \
-                } \
-            } \
-        }); \
+                    } else {                                \
+                        Log_err("rm %s failed", path);      \
+                    }                                       \
+                } else {                                    \
+                    Log_info("rm %s success", path);        \
+                }                                           \
+            }                                               \
+        });                                                 \
     } while (0)
-
 
 #endif  // _WIN32
 
