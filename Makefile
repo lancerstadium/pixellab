@@ -81,11 +81,11 @@ docs_dev:
 
 docs_deploy:
 	@npm run docs:build
-	@cd docs/.vuepress/dist
-	@git init
-	@git add .
-	@git commit -m 'deploy'
-	@git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
+	@cd docs/.vuepress/dist \
+	&& git init \
+	&& git add . \
+	&& git commit -m 'deploy' \
+	&& git push -f https://github.com/$(AUTHOR)/$(APP).git main:gh-pages
 
 # The Cleaner
 clean:
