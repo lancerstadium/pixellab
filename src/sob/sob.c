@@ -8,28 +8,8 @@ ArgParser_def_fn(all) {
     printf("Hello World\n");
 }
 
-ArgParser_def_fn(hello) {
-    printf("Hello World\n");
-}
-
-ArgParser_def_fn(test) {
-    printf(_WHITE_BD_UL("Running Unit Tests:") "\n");
-}
-
-ArgParser_def_args(default_args) = {
-    ArgParser_arg_INPUT,
-    ArgParser_arg_OUTPUT,
-    ArgParser_arg_END
-};
-
-int main(int argc, char *argv[], char *envp[]) {
-
-    ArgParser_init("Sob - Super Nobuild Toolkit with only .h file", NULL);
-    ArgParser_use_cmd(NULL, "run all" , "This is usage", all  , default_args);
-    ArgParser_use_cmd(NULL, "run hello", "This is usage", hello, default_args);
-    ArgParser_use_cmd(NULL, "run test", "This is usage", test , default_args);
-    
-    CStr* cmd1, *cmd2, *cmd3;
+ArgParser_def_fn(sys) {
+   CStr* cmd1, *cmd2, *cmd3;
     CStr* cmd4;
     CStr* cmd5 = (CStr[]) {"AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH", NULL};
     CStrArray_new(cmd1, "uname", "-a");
@@ -49,9 +29,9 @@ int main(int argc, char *argv[], char *envp[]) {
 
     CStr* files;
     LIST_FILES("./", files);
-    CStrArray_forauto(files, i, file, {
-        printf("- %s\n", file);
-    });
+    // CStrArray_forauto(files, i, file, {
+    //     printf("- %s\n", file);
+    // });
 
     // Sob_rename(mm, "hello");
 
@@ -78,8 +58,26 @@ int main(int argc, char *argv[], char *envp[]) {
     TOUCH("demo01.txt", "demo02.txt", "demo03.txt");
     RM("demo01.txt", "demo02.txt", "demo03.txt");
 
-
     // printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
+}
+
+ArgParser_def_fn(test) {
+    printf(_WHITE_BD_UL("Running Unit Tests:") "\n");
+}
+
+ArgParser_def_args(default_args) = {
+    ArgParser_arg_INPUT,
+    ArgParser_arg_OUTPUT,
+    ArgParser_arg_END
+};
+
+int main(int argc, char *argv[], char *envp[]) {
+
+    ArgParser_init("Sob - Super Nobuild Toolkit with only .h file", NULL);
+    ArgParser_use_cmd(NULL, "run all" , "This is usage", all  , default_args);
+    ArgParser_use_cmd(NULL, "run sys" , "This is usage", sys, default_args);
+    ArgParser_use_cmd(NULL, "run test", "This is usage", test , default_args);
+    
 
     ArgParser_sys_cmd("uname", "-a");
     ArgParser_sys_cmd("ls", "-l");

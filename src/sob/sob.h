@@ -1248,7 +1248,7 @@ typedef struct {
 typedef void (*ArgParser_cmd_fn)(int argc, char *argv[], char *envp[]);
 
 
-typedef struct {
+typedef struct ArgParserCmd{
     union {
         // User define command
         struct {
@@ -1529,85 +1529,89 @@ UNUSED static ArgParser sob_ap = {
         }                                                                                               \
     } while (0)
 
-#define ArgParser_run(Argc, Argv, Envp)                                                           \
-    do {                                                                                          \
-        int argc_copy = Argc;                                                                     \
-        char** argv_copy = Argv;                                                                  \
-        sob_ap.prog_path = Argv[0];                                                               \
-        sob_ap.prog_name = strrchr(sob_ap.prog_path, '/');                                        \
-        if (sob_ap.prog_name) {                                                                   \
-            sob_ap.prog_name++;                                                                   \
-        } else {                                                                                  \
-            sob_ap.prog_name = sob_ap.prog_path;                                                  \
-        }                                                                                         \
-        if (Argc > 1) {                                                                           \
-            if (strcmp(Argv[1], "-h") == 0 || strcmp(Argv[1], "--help") == 0) {                   \
-                ArgParser_print_parser();                                                         \
-                exit(ERROR_SOB_NONE);                                                             \
-            }                                                                                     \
-        }                                                                                         \
-        Argc--;                                                                                   \
-        Argv++;                                                                                   \
-        if (sob_ap.has_subcmd) {                                                                  \
-            char* subcmd;                                                                         \
-            bool exist = false;                                                                   \
-            if (!Argc && !sob_ap.has_global) {                                                    \
-                ArgParser_print_parser();                                                         \
-                ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("all") "`");            \
-                exit(ERROR_AP_NO_EXIST_SUBCMD);                                                   \
-            } else if (Argc && sob_ap.has_global) {                                               \
-                subcmd = Argv[0];                                                                 \
-                for (int i = 0; i < sob_ap.n_cmd; i++) {                                          \
-                    if (subcmd && sob_ap.cmds[i].type == AP_CMD_USER && strcmp(subcmd, sob_ap.cmds[i].name) == 0) {                               \
-                        sob_ap.cmds[i].is_sub = true;                                             \
-                        sob_ap.cur_cmd = i;                                                       \
-                        exist = true;                                                             \
-                        break;                                                                    \
-                    } else if(subcmd && sob_ap.cmds[i].type == AP_CMD_SYS) { \
+#define ArgParser_run(Argc, Argv, Envp)                                                                                         \
+    do {                                                                                                                        \
+        int argc_copy = Argc;                                                                                                   \
+        char** argv_copy = Argv;                                                                                                \
+        sob_ap.prog_path = Argv[0];                                                                                             \
+        sob_ap.prog_name = strrchr(sob_ap.prog_path, '/');                                                                      \
+        if (sob_ap.prog_name) {                                                                                                 \
+            sob_ap.prog_name++;                                                                                                 \
+        } else {                                                                                                                \
+            sob_ap.prog_name = sob_ap.prog_path;                                                                                \
+        }                                                                                                                       \
+        if (Argc > 1) {                                                                                                         \
+            if (strcmp(Argv[1], "-h") == 0 || strcmp(Argv[1], "--help") == 0) {                                                 \
+                ArgParser_print_parser();                                                                                       \
+                exit(ERROR_SOB_NONE);                                                                                           \
+            }                                                                                                                   \
+        }                                                                                                                       \
+        Argc--;                                                                                                                 \
+        Argv++;                                                                                                                 \
+        if (sob_ap.has_subcmd) {                                                                                                \
+            char* subcmd;                                                                                                       \
+            bool exist = false;                                                                                                 \
+            if (!Argc && !sob_ap.has_global) {                                                                                  \
+                ArgParser_print_parser();                                                                                       \
+                ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("all") "`");                                          \
+                exit(ERROR_AP_NO_EXIST_SUBCMD);                                                                                 \
+            } else if (Argc && sob_ap.has_global) {                                                                             \
+                subcmd = Argv[0];                                                                                               \
+                for (int i = 0; i < sob_ap.n_cmd; i++) {                                                                        \
+                    if (subcmd && sob_ap.cmds[i].type == AP_CMD_USER && strcmp(subcmd, sob_ap.cmds[i].name) == 0) {             \
+                        sob_ap.cmds[i].is_sub = true;                                                                           \
+                        sob_ap.cur_cmd = i;                                                                                     \
+                        exist = true;                                                                                           \
+                        break;                                                                                                  \
+                    } else if (subcmd && sob_ap.cmds[i].type == AP_CMD_SYS) {                                                   \
                         CStr prog = CStrArray_get(sob_ap.cmds[i].sys_line, 0) ? CStrArray_get(sob_ap.cmds[i].sys_line, 0) : ""; \
-                        if (strcmp(subcmd, prog) == 0) {    \
-                            sob_ap.cmds[i].is_sub = true;                                             \
-                            sob_ap.cur_cmd = i;                                                       \
-                            exist = true;                                                             \
-                            break;                                                                    \
-                        } \
-                    } \
-                }                                                                                 \
-                if (!exist) {                                                                     \
-                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("%s") "`", subcmd); \
-                    exit(ERROR_AP_NO_EXIST_SUBCMD);                                               \
-                }                                                                                 \
-            } else if (!Argc && sob_ap.has_global) {                                              \
-                subcmd = SOB_AP_GLCMD;                                                            \
-            } else {                                                                              \
-                subcmd = Argv[0];                                                                 \
-                for (int i = 0; i < sob_ap.n_cmd; i++) {                                          \
-                    if (strcmp(subcmd, sob_ap.cmds[i].name) == 0) {                               \
-                        sob_ap.cmds[i].is_sub = true;                                             \
-                        sob_ap.cur_cmd = i;                                                       \
-                        exist = true;                                                             \
-                        break;                                                                    \
-                    }                                                                             \
-                }                                                                                 \
-                if (!exist) {                                                                     \
-                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("%s") "`", subcmd); \
-                    exit(ERROR_AP_NO_EXIST_SUBCMD);                                               \
-                }                                                                                 \
-            }                                                                                     \
-        } else {                                                                                  \
-            sob_ap.cur_cmd = 0;                                                                   \
-        }                                                                                         \
-        Argc -= (sob_ap.has_subcmd ? 1 : 0);                                                      \
-        Argv += (sob_ap.has_subcmd ? 1 : 0);                                                      \
-        _ArgParser_cmd(Argc, Argv);                                                               \
-        if (ArgParser_cur_cmd->type == AP_CMD_USER) {                                             \
-            ArgParser_cur_cmd->fn(argc_copy, argv_copy, Envp);                                    \
-        } else if (ArgParser_cur_cmd->type == AP_CMD_SYS) {                                       \
-            CStr* cmd_line = ArgParser_cur_cmd->sys_line;                                         \
-            if (cmd_line) {                                                                       \
-                CMD(cmd_line);                                                                    \
-            }                                                                                     \
-        }                                                                                         \
+                        if (strcmp(subcmd, prog) == 0) {                                                                        \
+                            sob_ap.cmds[i].is_sub = true;                                                                       \
+                            sob_ap.cur_cmd = i;                                                                                 \
+                            exist = true;                                                                                       \
+                            break;                                                                                              \
+                        }                                                                                                       \
+                    }                                                                                                           \
+                }                                                                                                               \
+                if (!exist) {                                                                                                   \
+                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("%s") "`", subcmd);                               \
+                    exit(ERROR_AP_NO_EXIST_SUBCMD);                                                                             \
+                }                                                                                                               \
+            } else if (!Argc && sob_ap.has_global) {                                                                            \
+                subcmd = SOB_AP_GLCMD;                                                                                          \
+            } else {                                                                                                            \
+                subcmd = Argv[0];                                                                                               \
+                for (int i = 0; i < sob_ap.n_cmd; i++) {                                                                        \
+                    if (strcmp(subcmd, sob_ap.cmds[i].name) == 0) {                                                             \
+                        sob_ap.cmds[i].is_sub = true;                                                                           \
+                        sob_ap.cur_cmd = i;                                                                                     \
+                        exist = true;                                                                                           \
+                        break;                                                                                                  \
+                    }                                                                                                           \
+                }                                                                                                               \
+                if (!exist) {                                                                                                   \
+                    ArgParser_err_no(ERROR_AP_NO_EXIST_SUBCMD, "`" _YELLOW_BD("%s") "`", subcmd);                               \
+                    exit(ERROR_AP_NO_EXIST_SUBCMD);                                                                             \
+                }                                                                                                               \
+            }                                                                                                                   \
+        } else {                                                                                                                \
+            sob_ap.cur_cmd = 0;                                                                                                 \
+        }                                                                                                                       \
+        Argc -= (sob_ap.has_subcmd ? 1 : 0);                                                                                    \
+        Argv += (sob_ap.has_subcmd ? 1 : 0);                                                                                    \
+        _ArgParser_cmd(Argc, Argv);                                                                                             \
+        ArgParserCmd* cur_cmd = (ArgParserCmd*)ArgParser_cur_cmd;                                                                              \
+        while (cur_cmd) {                                                                                                       \
+            if (cur_cmd->type == AP_CMD_USER) {                                                                                 \
+                cur_cmd->fn(argc_copy, argv_copy, Envp);                                                                        \
+            } else if (cur_cmd->type == AP_CMD_SYS) {                                                                           \
+                CStr* cmd_line = cur_cmd->sys_line;                                                                             \
+                if (cmd_line) {                                                                                                 \
+                    CMD(cmd_line);                                                                                              \
+                }                                                                                                               \
+            }                                                                                                                   \
+            cur_cmd = cur_cmd->next;                                                                                            \
+        }                                                                                                                       \
     } while (0)
 
 #ifdef __cplusplus
