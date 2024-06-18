@@ -451,10 +451,11 @@ UNUSED static Logger sob_logger = {
 #define CStr_find_back(S, C)            strrchr(S, C)
 #define CStrArray_err_no(N, ...)        Log_err_no(N, "[CStrArray]: " __VA_ARGS__)
 #define CStrArray_ast_no(expr, N, ...)  Log_ast_no(expr, N, "[CStrArray]: " __VA_ARGS__)
-#define CStrArray_get(SA, I)            ((SA == NULL) ? NULL : (SA)[I])
-#define CStrArray_set(SA, I, S)         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); ((SA)[I] = (S))
+#define CStrArray_get(SA, I)            (((SA == NULL) || ((SA)[I] == NULL)) ? NULL : (SA)[I])
+#define CStrArray_set(SA, I, S)         do { CStrArray_ast_no(SA != NULL && (SA)[I] != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s[%lu]") "`", #SA, (I)); ((SA)[I] = (S)); } while (0)
 #define CStrArray_prefix(SA, FIX)       CStrArray_forauto(SA, I, S, CStr_cat(SD, FIX, S); CStrArray_set(SA, I, SD);)
 #define CStrArray_suffix(SA, FIX)       CStrArray_forauto(SA, I, S, CStr_cat(SD, S, FIX); CStrArray_set(SA, I, SD);)
+#define CStrArray_display(SA)           CStrArray_forauto(SA, I, S, CStr_put(S); CStr_put(" ");); CStr_put("\n");
 #define CStr_no_ext(S1, S2)                                               \
     do {                                                                  \
         char* ext = CStr_find_back(S1, '.');                              \
@@ -616,6 +617,20 @@ UNUSED static Logger sob_logger = {
         CStrArray_join(SA, S, PATH_SEP);                                                   \
     } while (0)
 
+#define CStrArray_from(SA, S)                                                              \
+    do {                                                                                   \
+        char* S_copy = strdup(S);                                                          \
+        char* tmp = strtok(S_copy, " ");                                                   \
+        if (SA == NULL) {                                                                  \
+            SA = (CStr[]){NULL};                                                           \
+        }                                                                                  \
+        CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
+        while (tmp != NULL) {                                                              \
+            printf("tmp: %s\n", tmp);                                                      \
+            CStrArray_push(SA, tmp);                                                       \
+            tmp = strtok(NULL, " ");                                                       \
+        }                                                                                  \
+    } while (0)
 
 // ==================================================================================== //
 //                                    sob: Data Struct (DS)
@@ -1089,26 +1104,67 @@ typedef struct {
         Log_ast(!WIFSIGNALED(status), "`" _YELLOW_BD("%d") "`", status);                           \
     } while (0)
 
+#define FORK(PID)                                           \
+    do {                                                    \
+        SobPid cpid = fork();                               \
+        Log_ast(cpid >= 0, "`" _YELLOW_BD("%d") "`", cpid); \
+        PID = cpid;                                         \
+    } while (0)
+
 // Use execvp()
-#define CMD(Cmd)                                                    \
+#define CMD(PID, SA)                                                \
     do {                                                            \
-        CStr prog = CStrArray_get(Cmd, 0);                          \
-        SobPid cpid = fork();                                       \
-        Log_ast(cpid >= 0, "`" _YELLOW_BD("%s") "`", prog);         \
-        if (cpid == 0) {                                            \
+        if (PID == 0) {                                             \
+            CStr prog = CStrArray_get(SA, 0);                       \
             Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog); \
-            execvp(prog, (char* const*)Cmd);                        \
+            execvp(prog, (char* const*)SA);                         \
         } else {                                                    \
-            WAIT(cpid);                                             \
+            WAIT(PID);                                              \
         }                                                           \
+    } while (0)
+
+#define CMD2(PID, SA1, SA2)                                         \
+    do {                                                            \
+        if (PID == 0) {                                             \
+            CStr prog = CStrArray_get(SA1, 0);                      \
+            Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog); \
+            execvp(prog, (char* const*)SA1);                        \
+            prog = CStrArray_get(SA2, 0);                           \
+            Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog); \
+            execvp(prog, (char* const*)SA2);                        \
+        } else {                                                    \
+            WAIT(PID);                                              \
+        }                                                           \
+    } while (0)
+
+#define CMD3(PID, SA1, SA2, SA3)                                         \
+    do {                                                                \
+        if (PID == 0) {                                                 \
+            CStr prog = CStrArray_get(SA1, 0);                           \
+            Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog);     \
+            execvp(prog, (char* const*)SA1);                             \
+            prog = CStrArray_get(SA2, 0);                               \
+            Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog);     \
+            execvp(prog, (char* const*)SA2);                             \
+            prog = CStrArray_get(SA3, 0);                               \
+            Log_sysc(_RED("[%d] ") _BLUE_UL("%s"), getpid(), prog);     \
+            execvp(prog, (char* const*)SA3);                             \
+        } else {                                                        \
+            WAIT(PID);                                                  \
+        }                                                               \
     } while (0)
 
 #define EXEC(...)                        \
     do {                                 \
         CStr* cmd;                       \
         CStrArray_new(cmd, __VA_ARGS__); \
-        CMD(cmd);                        \
+        SobPid PID;                      \
+        FORK(PID);                       \
+        CMD(PID, cmd);                   \
     } while (0)
+
+
+
 
 #define LIST_FILES(PATH, SA)                             \
     do {                                                 \
@@ -1601,13 +1657,12 @@ UNUSED static ArgParser sob_ap = {
         Argv += (sob_ap.has_subcmd ? 1 : 0);                                                                                    \
         _ArgParser_cmd(Argc, Argv);                                                                                             \
         ArgParserCmd* cur_cmd = (ArgParserCmd*)ArgParser_cur_cmd;                                                                              \
-        while (cur_cmd) {                                                                                                       \
+        while (cur_cmd) { \
             if (cur_cmd->type == AP_CMD_USER) {                                                                                 \
                 cur_cmd->fn(argc_copy, argv_copy, Envp);                                                                        \
             } else if (cur_cmd->type == AP_CMD_SYS) {                                                                           \
                 CStr* cmd_line = cur_cmd->sys_line;                                                                             \
                 if (cmd_line) {                                                                                                 \
-                    CMD(cmd_line);                                                                                              \
                 }                                                                                                               \
             }                                                                                                                   \
             cur_cmd = cur_cmd->next;                                                                                            \

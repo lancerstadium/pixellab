@@ -9,15 +9,20 @@ ArgParser_def_fn(all) {
 }
 
 ArgParser_def_fn(sys) {
-   CStr* cmd1, *cmd2, *cmd3;
+    CStr* cmd1, *cmd2, *cmd3;
     CStr* cmd4;
     CStr* cmd5 = (CStr[]) {"AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH", NULL};
     CStrArray_new(cmd1, "uname", "-a");
     CStrArray_new(cmd2, "ls", "-l");
-    CStrArray_new(cmd3, "make", "all");
-    CStrArray_new(cmd4, "make", "clean", "watermelon");
     CStrArray_push(cmd2, "isam");
     CStrArray_pushn(cmd2, cmd5);
+    CStrArray_new(cmd3, "make", "all");
+
+    CStrArray_from(cmd4, "ls -l -a");
+    
+    CStrArray_display(cmd2);
+
+
     CStr mm;
     CStrArray_pop(cmd2, mm);
     printf("mm: %s\n", mm);
@@ -26,6 +31,7 @@ ArgParser_def_fn(sys) {
     printf("%s\n", b ? "true" : "false");
 
     EXEC("echo", "nihao");
+    EXEC("ls", "-l");
 
     CStr* files;
     LIST_FILES("./", files);
