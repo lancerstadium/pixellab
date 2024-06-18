@@ -342,6 +342,7 @@ typedef struct {
         ERROR_CS_ALLOC_FAIL,
         ERROR_CS_ACCESS_FAIL,
         ERROR_CS_CHANGE_FAIL,
+        ERROR_CS_OUT_BOUND,
         ERROR_SYS_STAT_FAIL,
         ERROR_SYS_EXEC_FAIL,
         ERROR_AP_CMD_CONFLICT,
@@ -362,6 +363,7 @@ UNUSED static LogError sob_log_error[] = {
     { ERROR_CS_ALLOC_FAIL       , "Memory Allocation Failed"    },
     { ERROR_CS_ACCESS_FAIL      , "Memory Access Failed"        },
     { ERROR_CS_CHANGE_FAIL      , "String Change Failed"        },
+    { ERROR_CS_OUT_BOUND        , "String Array Out Of Bound"   },
     { ERROR_SYS_STAT_FAIL       , "Path Stat Failed"            },
     { ERROR_SYS_EXEC_FAIL       , "Command Exec Failed"         },
     { ERROR_AP_CMD_CONFLICT     , "Command Conflict"            },
@@ -452,7 +454,6 @@ UNUSED static Logger sob_logger = {
 #define CStrArray_err_no(N, ...)        Log_err_no(N, "[CStrArray]: " __VA_ARGS__)
 #define CStrArray_ast_no(expr, N, ...)  Log_ast_no(expr, N, "[CStrArray]: " __VA_ARGS__)
 #define CStrArray_get(SA, I)            (((SA == NULL) || ((SA)[I] == NULL)) ? NULL : (SA)[I])
-#define CStrArray_set(SA, I, S)         do { CStrArray_ast_no(SA != NULL && (SA)[I] != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s[%lu]") "`", #SA, (I)); ((SA)[I] = (S)); } while (0)
 #define CStrArray_prefix(SA, FIX)       CStrArray_forauto(SA, I, S, CStr_cat(SD, FIX, S); CStrArray_set(SA, I, SD);)
 #define CStrArray_suffix(SA, FIX)       CStrArray_forauto(SA, I, S, CStr_cat(SD, S, FIX); CStrArray_set(SA, I, SD);)
 #define CStrArray_display(SA)           CStrArray_forauto(SA, I, S, CStr_put(S); CStr_put(" ");); CStr_put("\n");
@@ -512,6 +513,20 @@ UNUSED static Logger sob_logger = {
         CStrArray_forauto(SA, i, s, free(s));                                              \
         free(SA);                                                                          \
         SA = NULL;                                                                         \
+    } while (0)
+
+#define CStrArray_set(SA, I, S)                                                                      \
+    do {                                                                                             \
+        CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s[%lu]") "`", #SA, (I)); \
+        size_t n = 0;                                                                                \
+        CStrArray_size(SA, n);                                                                       \
+        if ((S) != NULL && (I) < n) {                                                                \
+            ((SA)[I] = (S));                                                                         \
+        } else if ((S) == NULL && (I) < n) {                                                         \
+            (SA)[I] = NULL;                                                                          \
+        } else {                                                                                     \
+            CStrArray_ast_no(0, ERROR_CS_OUT_BOUND, "`" _YELLOW_BD("%s[%lu]") "`", #SA, (I));        \
+        }                                                                                            \
     } while (0)
 
 #define CStrArray_join(SA, S, SEP)                                                      \
@@ -574,14 +589,29 @@ UNUSED static Logger sob_logger = {
         }                                                                                               \
     } while (0)
 
+#define CStrArray_extend(SA, N)                                                                                        \
+    do {                                                                                                               \
+        CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                             \
+        size_t n = 0;                                                                                                  \
+        CStrArray_size(SA, n);                                                                                         \
+        SA = realloc(SA, (n + N + 1) * sizeof(CStr));                                                                  \
+        for (size_t i = n; i < n + (size_t)(N); i++) {                                                                 \
+            CStrArray_set(SA, i, "");                                                                                  \
+        }                                                                                                              \
+        CStrArray_ast_no(SA != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                              \
+        CStrArray_set(SA, n + (size_t)(N), NULL);                                                                      \
+        size_t m = 0;                                                                                                  \
+        CStrArray_size(SA, m);                                                                                         \
+        CStrArray_ast_no(m == (n + (N)), ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s[%lu+%lu]") "`", #SA, n, (size_t)(N)); \
+    } while (0)
+
 #define CStrArray_push(SA, S)                                                              \
     do {                                                                                   \
         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
         size_t n = 0;                                                                      \
         CStrArray_size(SA, n);                                                             \
-        SA = realloc(SA, (n + 2) * sizeof(CStr));                                          \
+        CStrArray_extend(SA, 1);                                                           \
         CStrArray_set(SA, n, S);                                                           \
-        CStrArray_set(SA, n + 1, NULL);                                                    \
     } while (0)
 
 #define CStrArray_pushn(SA1, SA2)                                                            \
