@@ -15,12 +15,13 @@ ArgParser_def_fn(sys) {
     CStrArray_new(cmd1, "uname", "-a");
     CStrArray_new(cmd2, "ls", "-l");
     CStrArray_push(cmd2, "isam");
-    CStrArray_pushn(cmd2, cmd5);
+    
     CStrArray_new(cmd3, "make", "all");
 
     CStrArray_from(cmd4, "ls -l -a");
     
-    CStrArray_display(cmd2);
+    CStrArray_pushn(cmd2, cmd5);
+    
 
 
     CStr mm;

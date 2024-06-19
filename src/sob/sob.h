@@ -524,7 +524,7 @@ UNUSED static Logger sob_logger = {
             ((SA)[I] = (S));                                                                         \
         } else if ((S) == NULL && (I) < n) {                                                         \
             (SA)[I] = NULL;                                                                          \
-        } else {                                                                                     \
+        } else if((SA)[I] == NULL && (I) >= n) {                                                     \
             CStrArray_ast_no(0, ERROR_CS_OUT_BOUND, "`" _YELLOW_BD("%s[%lu]") "`", #SA, (I));        \
         }                                                                                            \
     } while (0)
@@ -594,12 +594,14 @@ UNUSED static Logger sob_logger = {
         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                             \
         size_t n = 0;                                                                                                  \
         CStrArray_size(SA, n);                                                                                         \
-        SA = realloc(SA, (n + N + 1) * sizeof(CStr));                                                                  \
+        CStr* SA_copy = malloc((n + N + 1) * sizeof(CStr));                                                            \
+        memmove(SA_copy, SA, n * sizeof(CStr));                                                                        \
+        CStrArray_ast_no(SA_copy != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                         \
         for (size_t i = n; i < n + (size_t)(N); i++) {                                                                 \
-            CStrArray_set(SA, i, "");                                                                                  \
+            SA_copy[i] = "<EXT>";                                                                                      \
         }                                                                                                              \
-        CStrArray_ast_no(SA != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                              \
-        CStrArray_set(SA, n + (size_t)(N), NULL);                                                                      \
+        SA_copy[n + N] = NULL;                                                                                         \
+        SA = SA_copy;                                                                                                  \
         size_t m = 0;                                                                                                  \
         CStrArray_size(SA, m);                                                                                         \
         CStrArray_ast_no(m == (n + (N)), ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s[%lu+%lu]") "`", #SA, n, (size_t)(N)); \
@@ -611,7 +613,7 @@ UNUSED static Logger sob_logger = {
         size_t n = 0;                                                                      \
         CStrArray_size(SA, n);                                                             \
         CStrArray_extend(SA, 1);                                                           \
-        CStrArray_set(SA, n, S);                                                           \
+        SA[n] = strdup(S);                                                                 \
     } while (0)
 
 #define CStrArray_pushn(SA1, SA2)                                                            \
@@ -621,12 +623,10 @@ UNUSED static Logger sob_logger = {
         size_t n = 0;                                                                        \
         CStrArray_size(SA1, n);                                                              \
         size_t m = 0;                                                                        \
-        CStrArray_size(SA2, m);                                                              \
-        SA1 = realloc(SA1, (n + m + 1) * sizeof(CStr));                                      \
         for (size_t i = 0; i < m; i++) {                                                     \
-            CStrArray_set(SA1, n + i, CStrArray_get(SA2, i));                                \
+            CStr tmp = CStrArray_get(SA2, i) == NULL ? "<EXT>" : CStrArray_get(SA2, i);      \
+            CStrArray_push(SA1, tmp);                                                        \
         }                                                                                    \
-        CStrArray_set(SA1, n + m, NULL);                                                     \
     } while (0)
 
 #define CStrArray_pop(SA, S)                \
