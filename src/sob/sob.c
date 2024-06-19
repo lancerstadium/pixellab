@@ -88,7 +88,7 @@ int main(int argc, char *argv[], char *envp[]) {
     
 
     ArgParser_sys_cmd("uname -a");
-    ArgParser_sys_cmd("ls -l");
+    ArgParser_sys_cmd("ulimit -s");
     // ArgParser_sys_cmd("perf record -e cycles -F 999 ls -l");
     // ArgParser_sys_cmd("echo nihao");
 
