@@ -489,8 +489,11 @@ UNUSED static Logger sob_logger = {
 
 #define CStrArray_size(SA, N)                     \
     do {                                          \
-        N = 0;                                    \
-        while (CStrArray_get(SA, N) != NULL) N++; \
+        N = (size_t)0;                                    \
+        while (CStrArray_get((SA), (size_t)N) != NULL) {\
+            printf("- %lu: %s\n", (size_t)N, CStrArray_get((SA), (size_t)N)); \
+            (N)++; \
+        } \
     } while (0)
 
 #define CStrArray_new(SA, ...)                                                                \
@@ -598,7 +601,7 @@ UNUSED static Logger sob_logger = {
         memmove(SA_copy, SA, n * sizeof(CStr));                                                                        \
         CStrArray_ast_no(SA_copy != NULL, ERROR_CS_ALLOC_FAIL, "`" _YELLOW_BD("%s") "`", #SA);                         \
         for (size_t i = n; i < n + (size_t)(N); i++) {                                                                 \
-            SA_copy[i] = "<EXT>";                                                                                      \
+            SA_copy[i] = strdup(" ");                                                                                      \
         }                                                                                                              \
         SA_copy[n + N] = NULL;                                                                                         \
         SA = SA_copy;                                                                                                  \
@@ -611,9 +614,13 @@ UNUSED static Logger sob_logger = {
     do {                                                                                   \
         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
         size_t n = 0;                                                                      \
+        printf("prepush: %s \n", S); \
         CStrArray_size(SA, n);                                                             \
+        printf("push: %s to %lu\n", S, n); \
         CStrArray_extend(SA, 1);                                                           \
+        printf("push: %s to %lu\n", S, n); \
         SA[n] = strdup(S);                                                                 \
+        printf("push: %s to %lu\n", S, n); \
     } while (0)
 
 #define CStrArray_pushn(SA1, SA2)                                                            \
@@ -623,8 +630,9 @@ UNUSED static Logger sob_logger = {
         size_t n = 0;                                                                        \
         CStrArray_size(SA1, n);                                                              \
         size_t m = 0;                                                                        \
+        CStrArray_size(SA2, m);                                                              \
         for (size_t i = 0; i < m; i++) {                                                     \
-            CStr tmp = CStrArray_get(SA2, i) == NULL ? "<EXT>" : CStrArray_get(SA2, i);      \
+            CStr tmp = CStrArray_get(SA2, i) == NULL ? (strdup(" ")) : CStrArray_get(SA2, i);      \
             CStrArray_push(SA1, tmp);                                                        \
         }                                                                                    \
     } while (0)
@@ -649,16 +657,15 @@ UNUSED static Logger sob_logger = {
 
 #define CStrArray_from(SA, S)                                                              \
     do {                                                                                   \
-        char* S_copy = strdup(S);                                                          \
+        char* S_copy = strdup((S));                                                          \
         char* tmp = strtok(S_copy, " ");                                                   \
         if (SA == NULL) {                                                                  \
-            SA = (CStr[]){NULL};                                                           \
+            CStrArray_new(SA, tmp); \
         }                                                                                  \
         CStrArray_ast_no(SA != NULL, ERROR_CS_ACCESS_FAIL, "`" _YELLOW_BD("%s") "`", #SA); \
-        while (tmp != NULL) {                                                              \
+        while ((tmp = strtok(NULL, " ")) != NULL) {                                                              \
             printf("tmp: %s\n", tmp);                                                      \
             CStrArray_push(SA, tmp);                                                       \
-            tmp = strtok(NULL, " ");                                                       \
         }                                                                                  \
     } while (0)
 
@@ -1184,10 +1191,10 @@ typedef struct {
         }                                                               \
     } while (0)
 
-#define EXEC(...)                        \
+#define EXEC(S)                          \
     do {                                 \
         CStr* cmd;                       \
-        CStrArray_new(cmd, __VA_ARGS__); \
+        CStrArray_from(cmd, S); \
         SobPid PID;                      \
         FORK(PID);                       \
         CMD(PID, cmd);                   \
@@ -1440,14 +1447,6 @@ UNUSED static ArgParser sob_ap = {
         sob_ap.n_cmd++;                                                                   \
     } while (0)
 
-
-#define ArgParser_sys_cmd(...)           \
-    do {                                 \
-        CStr* cmd;                       \
-        CStrArray_new(cmd, __VA_ARGS__); \
-        ArgParser_sys_CMD(cmd);          \
-    } while (0)
-
 #define ArgParser_sys_CMD(SA)                                                                \
     do {                                                                                     \
         ArgParser_ast_no(sob_ap.n_cmd < SOB_AP_MSCMD, ERROR_AP_OVER_SUBCMD);                 \
@@ -1458,6 +1457,13 @@ UNUSED static ArgParser sob_ap = {
         ArgParser_max_cmd.prev = NULL;                                                       \
         sob_ap.has_subcmd = true;                                                            \
         sob_ap.n_cmd++;                                                                      \
+    } while (0)
+
+#define ArgParser_sys_cmd(S)    \
+    do {                        \
+        CStr* cmd;              \
+        CStrArray_from(cmd, S); \
+        ArgParser_sys_CMD(cmd); \
     } while (0)
 
 #define ArgParser_sys_cmd_exec(Cmd)         \
@@ -1691,8 +1697,11 @@ UNUSED static ArgParser sob_ap = {
             if (cur_cmd->type == AP_CMD_USER) {                                                                                 \
                 cur_cmd->fn(argc_copy, argv_copy, Envp);                                                                        \
             } else if (cur_cmd->type == AP_CMD_SYS) {                                                                           \
+                SobPid PID; \
+                FORK(PID); \
                 CStr* cmd_line = cur_cmd->sys_line;                                                                             \
                 if (cmd_line) {                                                                                                 \
+                    CMD(PID, cmd_line); \
                 }                                                                                                               \
             }                                                                                                                   \
             cur_cmd = cur_cmd->next;                                                                                            \

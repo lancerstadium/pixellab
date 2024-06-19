@@ -15,13 +15,14 @@ ArgParser_def_fn(sys) {
     CStrArray_new(cmd1, "uname", "-a");
     CStrArray_new(cmd2, "ls", "-l");
     CStrArray_push(cmd2, "isam");
-    
-    CStrArray_new(cmd3, "make", "all");
 
+    CStrArray_new(cmd3, "make", "all");
     CStrArray_from(cmd4, "ls -l -a");
+
     
     CStrArray_pushn(cmd2, cmd5);
     
+    CStrArray_display(cmd4);
 
 
     CStr mm;
@@ -31,8 +32,8 @@ ArgParser_def_fn(sys) {
     bool b = IS_DIR("./docs");
     printf("%s\n", b ? "true" : "false");
 
-    EXEC("echo", "nihao");
-    EXEC("ls", "-l");
+    EXEC("echo nihao");
+    EXEC("ls -l");
 
     CStr* files;
     LIST_FILES("./", files);
@@ -58,7 +59,7 @@ ArgParser_def_fn(sys) {
     // printf("%s\n", cc);
 
     ECHO("hello", "world", _BLUE("Machine"));
-
+    /// TODO: Segment fault maybe stack overflow
     MKDIR("demo01", "demo02", "demo03");
     RM("demo01", "demo02", "demo03");
 
@@ -86,10 +87,10 @@ int main(int argc, char *argv[], char *envp[]) {
     ArgParser_use_cmd(NULL, "run test", "This is usage", test , default_args);
     
 
-    ArgParser_sys_cmd("uname", "-a");
-    ArgParser_sys_cmd("ls", "-l");
-    ArgParser_sys_cmd("perf", "record", "-e", "cycles", "-F", "999", "ls", "-l");
-    ArgParser_sys_cmd("echo", "nihao");
+    ArgParser_sys_cmd("uname -a");
+    ArgParser_sys_cmd("ls -l");
+    // ArgParser_sys_cmd("perf record -e cycles -F 999 ls -l");
+    // ArgParser_sys_cmd("echo nihao");
 
     ArgParser_run(argc, argv, envp);
     return 0;
