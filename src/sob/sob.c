@@ -1,77 +1,76 @@
 #include "sob.h"
 
 
-
+// ==================================================================================== //
+//                                    sob: application (APP)
+// ==================================================================================== //
 #ifndef SOB_APP_OFF
+#define VALGRIND
+
+CStrArray_def()
+
 
 ArgParser_def_fn(all) {
-    printf("Hello World\n");
+    ECHO("Hello World\n");
+}
+
+ArgParser_def_fn(logs) {
+    int n;
+    EXES(n, "tail -n $(($(tac test/tests.log | grep -m 1 -n '^───── Run' | cut -d: -f1) + 1)) test/tests.log | sed '/^$/d'");
 }
 
 ArgParser_def_fn(sys) {
     CStr* cmd1, *cmd2, *cmd3;
-    CStr* cmd4;
-    CStr* cmd5 = (CStr[]) {"AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH", NULL};
-    CStrArray_new(cmd1, "uname", "-a");
-    CStrArray_new(cmd2, "ls", "-l");
-    CStrArray_push(cmd2, "isam");
+    CStrArray_init(&cmd1, "uname", "-a", NULL);
+    CStrArray_init(&cmd3, "isam", "wuhu", NULL);
+    CStrArray_display(cmd1);
+    CStrArray_from(&cmd2, "ls -l");
+    CStrArray_display(cmd3);
+    CStrArray_set(cmd3, 0, "sll");
+    CStrArray_display(cmd3);
 
-    CStrArray_new(cmd3, "make", "all");
-    CStrArray_from(cmd4, "ls -l -a");
-
-    
-    CStrArray_pushn(cmd2, cmd5);
-    
-    CStrArray_display(cmd4);
-
-
-    CStr mm;
-    CStrArray_pop(cmd2, mm);
-    printf("mm: %s\n", mm);
-
-    bool b = IS_DIR("./docs");
-    printf("%s\n", b ? "true" : "false");
-
-    EXEC("echo nihao");
     EXEC("ls -l");
-
-    CStr* files;
-    LIST_FILES("./", files);
-    // CStrArray_forauto(files, i, file, {
-    //     printf("- %s\n", file);
-    // });
-
-    // Sob_rename(mm, "hello");
-
-    /// TODO: CStrArray_copy memory leak
-    // CStr* cmd2_copy;
-    // CStrArray_copy(cmd2, cmd2_copy);
-    // CStrArray_prefix(cmd2_copy, "-L");
-    // CStrArray_forauto(cmd2, i, s,
-    //     printf("copy: %s\n", s);
-    // );
-
-    /// TODO: CStrArray_join memory leak
-    // char* cc;
-    // CStrArray_path(cmd2, cc);
-    // printf("%s\n", cc);
-    // CStrArray_join(cmd2, cc, ",");
-    // printf("%s\n", cc);
-
-    ECHO("hello", "world", _BLUE("Machine"));
-    /// TODO: Segment fault maybe stack overflow
-    MKDIR("demo01", "demo02", "demo03");
-    RM("demo01", "demo02", "demo03");
-
-    TOUCH("demo01.txt", "demo02.txt", "demo03.txt");
-    RM("demo01.txt", "demo02.txt", "demo03.txt");
-
-    // printf("%s\n", STR_BOOL(IS_MODIFIED_AFTER("./demo01", "./demo02")));
+    EXEC("echo nihao");
 }
 
 ArgParser_def_fn(test) {
-    printf(_WHITE_BD_UL("Running Unit Tests:") "\n");
+    ECHO(_WHITE_BD_UL("Running Unit Tests:") "\n");
+    FILE *fp;
+    char buffer[1024];
+    char cmd_buf[1024+128];
+
+    EXEF(fp, "r", "find test -type f -name '*_tests'");
+    for (size_t i = 0; fgets(buffer, sizeof(buffer), fp) != NULL; i++) {
+        Str_trim(buffer);
+        if(IS_FILE(buffer)) {
+            STR_FMTN(cmd_buf, sizeof(cmd_buf), "./%s 2>> test/tests.log", buffer);
+            // STR_FMT(cmd_buf, "./%s 2>> test/tests.log | sed 's/\x1B\[[0-9;]*[JKmsu]//g' > test/tests.report", buffer);
+            int n;
+            EXES(n, cmd_buf);
+            if(n == 0) {
+                ECHO(_GREEN("[Test %lu Passed]") "\n", i);
+            } else {
+                ECHO(_RED("[Test %lu Failed]") "\n", i);
+                ECHO(_CYAN("[LOG]") "\n");
+                logs(argc, argv, envp);
+                break;
+            }
+        } else {
+            ECHO(_RED("[Test %lu not Found]") "\n", i);
+            break;
+        }
+    }
+    EXNF(fp);
 }
+
+ArgParser_def_fn(clean) {
+    int n;
+    EXEC("rm -rf build");
+    EXEC("rm -f test/tests.log test/valgrind.log");
+    EXES(n, "rm -rf test/*_tests");
+    EXES(n, "rm -rf *.out *.elf");
+}
+
 
 ArgParser_def_args(default_args) = {
     ArgParser_arg_INPUT,
@@ -82,18 +81,20 @@ ArgParser_def_args(default_args) = {
 int main(int argc, char *argv[], char *envp[]) {
 
     ArgParser_init("Sob - Super Nobuild Toolkit with only .h file", NULL);
-    ArgParser_use_cmd(NULL, "run all" , "This is usage", all  , default_args);
-    ArgParser_use_cmd(NULL, "run sys" , "This is usage", sys, default_args);
-    ArgParser_use_cmd(NULL, "run test", "This is usage", test , default_args);
+    ArgParser_use_cmd(NULL  , "run all"   , "This is usage", all  , default_args);
+    ArgParser_use_cmd(NULL  , "run sys"   , "This is usage", sys, default_args);
+    ArgParser_use_cmd(NULL  , "run test"  , "This is usage", test , default_args);
+    ArgParser_use_cmd("log" , "run log"   , "This is usage", logs , default_args);
+    ArgParser_use_cmd(NULL  , "run clean" , "This is usage", clean , default_args);
     
-
     ArgParser_sys_cmd("uname -a");
-    ArgParser_sys_cmd("ulimit -s");
-    // ArgParser_sys_cmd("perf record -e cycles -F 999 ls -l");
-    // ArgParser_sys_cmd("echo nihao");
+    ArgParser_sys_cmd("perf record -e cycles -F 999 ls -l");
 
     ArgParser_run(argc, argv, envp);
     return 0;
 }
 
 #endif
+// ==================================================================================== //
+//                                    sob: application (APP)
+// ==================================================================================== //
